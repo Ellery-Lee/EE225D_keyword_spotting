@@ -20,12 +20,15 @@ from utils.common import check_dir, path_join, increment_id
 
 config = get_config()
 
-wave_train_dir = config.rawdata_path + 'train/'
+# wave_train_dir = config.rawdata_path + 'train/'
+wave_train_dir = '../LRW1000_Public/audio/audio/'
 wave_valid_dir = config.rawdata_path + 'valid/'
 wave_noise_dir = config.rawdata_path + 'noise/'
 
-save_train_dir = config.train_path
-save_valid_dir = config.valid_path
+save_train_dir = './train_data/'
+# save_train_dir = config.train_path
+save_valid_dir = './valid_data/'
+# save_valid_dir = config.valid_path
 save_noise_dir = config.noise_path
 
 global_len = []
@@ -67,13 +70,15 @@ def convert_label(label):
 
 
 def process_stft(f):
-
-    y, sr = librosa.load(f, sr=config.samplerate)
-    if config.pre_emphasis:
-        y = pre_emphasis(y)
-    linearspec = np.transpose(np.abs(
-        librosa.core.stft(y, config.fft_size,
-                          config.hop_size)))
+    try:
+        y, sr = librosa.load(f, sr=config.samplerate)
+        if config.pre_emphasis:
+            y = pre_emphasis(y)
+        linearspec = np.transpose(np.abs(
+            librosa.core.stft(y, config.fft_size,
+                            config.hop_size)))
+    except:
+        raise Exception("process_stft failed: " + len(y))
 
     return linearspec, y
 
@@ -95,7 +100,10 @@ def process_mel(f):
 def make_record(f, label):
     # print(f)
     # print(text)
-    spectrogram, wave = process_stft(f)
+    try:
+        spectrogram, wave = process_stft(f)
+    except:
+        raise Exception("make_record failed")
     seq_len = spectrogram.shape[0]
     label_values, label_indices, label_shape = convert_label(label)
 
@@ -160,7 +168,7 @@ def batch_padding_trainning(tup_list):
         assert (len(t[0]) == t[1])
         paded_wave = np.pad(t[0], pad_width=(
             (0, max_len - t[0].shape[0]), (0, 0)),
-                            mode='constant', constant_values=0)
+            mode='constant', constant_values=0)
 
         new_list.append((paded_wave, t[1], t[2], t[3], t[4]))
     return new_list
@@ -173,7 +181,7 @@ def batch_padding_valid(tup_list):
     for t in tup_list:
         paded_wave = np.pad(t[0], pad_width=(
             (0, max_len - t[0].shape[0]), (0, 0)),
-                            mode='constant', constant_values=0)
+            mode='constant', constant_values=0)
         new_list.append((paded_wave, t[1], t[2], t[3], t[4]))
 
     return new_list
@@ -224,16 +232,21 @@ def generate_trainning_data(path):
         wav_list = pickle.load(f)
     print('read pkl from %s' % f)
     audio_list = [i[0] for i in wav_list]
-    label_list = [i[1] for i in wav_list]
-    text_list = [i[2] for i in wav_list]
+    label_list = [i[2] for i in wav_list]
+    text_list = [i[1] for i in wav_list]
+    # label_list = [i[1] for i in wav_list]
+    # text_list = [i[2] for i in wav_list]
     assert len(audio_list) == len(text_list)
     tuple_list = []
     counter = 0
     record_count = 0
     for i, audio_name in enumerate(audio_list):
-        spec, seq_len, label_values, label_indices, label_shape = make_record(
-            path_join(wave_train_dir, audio_name),
-            label_list[i])
+        try:
+            spec, seq_len, label_values, label_indices, label_shape = make_record(
+                path_join(wave_train_dir, audio_name+".wav"),
+                label_list[i])
+        except:
+            continue
         # print(text_list[i])
         # print(label_values)
         if spec is not None:
@@ -243,19 +256,24 @@ def generate_trainning_data(path):
         if counter == config.tfrecord_size:
             tuple_list = batch_padding_trainning(tuple_list)
             fname = 'data' + increment_id(record_count, 5) + '.tfrecords'
-            ex_list = [make_trainning_example(spec, seq_len, label_values,
-                                              label_indices, label_shape) for
-                       spec, seq_len, label_values, label_indices, label_shape
-                       in tuple_list]
-            writer = tf.python_io.TFRecordWriter(
-                path_join(save_train_dir, fname))
-            for ex in ex_list:
-                writer.write(ex.SerializeToString())
-            writer.close()
-            record_count += 1
-            counter = 0
-            tuple_list.clear()
-            print(fname, 'created')
+            try:
+                ex_list = [make_trainning_example(spec, seq_len, label_values,
+                                                label_indices, label_shape) for
+                        spec, seq_len, label_values, label_indices, label_shape
+                        in tuple_list]
+            except:
+                counter = 0
+                tuple_list.clear()
+            else:
+                writer = tf.io.TFRecordWriter(
+                    path_join(save_train_dir, fname))
+                for ex in ex_list:
+                    writer.write(ex.SerializeToString())
+                writer.close()
+                record_count += 1
+                counter = 0
+                tuple_list.clear()
+                print(fname, 'created')
     print('save in %s' % save_train_dir)
 
 
@@ -369,17 +387,22 @@ def shuffle(pkl_path):
 
 
 if __name__ == '__main__':
-    check_dir(save_train_dir)
-    check_dir(save_valid_dir)
-    check_dir(save_noise_dir)
+    trainPath = './all_audio_video_80.pkl'
+    validPath = './all_audio_video_20.pkl'
+    generate_trainning_data(trainPath)
+    generate_valid_data(validPath)
+# if __name__ == '__main__':
+#     check_dir(save_train_dir)
+#     check_dir(save_valid_dir)
+#     check_dir(save_noise_dir)
 
-    base_pkl = 'ctc_23w.pkl'
-    # sort_wave(wave_train_dir + base_pkl)
-    # # shuffle(wave_train_dir + base_pkl + '.sorted')
-    generate_trainning_data(
-        wave_train_dir + base_pkl + '.sorted.shuffled')
+#     base_pkl = 'ctc_23w.pkl'
+#     # sort_wave(wave_train_dir + base_pkl)
+#     # # shuffle(wave_train_dir + base_pkl + '.sorted')
+#     generate_trainning_data(
+#         wave_train_dir + base_pkl + '.sorted.shuffled')
 
-    # sort_wave(wave_valid_dir + "ctc_valid_pinyin.pkl")
-    generate_valid_data(wave_valid_dir + "ctc_valid.pkl.sorted")
+#     # sort_wave(wave_valid_dir + "ctc_valid_pinyin.pkl")
+#     generate_valid_data(wave_valid_dir + "ctc_valid.pkl.sorted")
 
-    generate_noise_data(wave_noise_dir + 'noise.pkl')
+#     generate_noise_data(wave_noise_dir + 'noise.pkl')
