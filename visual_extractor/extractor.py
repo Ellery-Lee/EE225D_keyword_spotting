@@ -1,12 +1,6 @@
 # coding: utf-8
 import math
-import numpy as np
-
-
-import torch
 import torch.nn as nn
-from torch.autograd import Variable
-import torch.nn.functional as F
 
 
 def conv3x3(in_planes, out_planes, stride=1):
@@ -144,9 +138,9 @@ class VideoCNN(nn.Module):
         x = x.contiguous()
         x = x.view(-1, 64, x.size(3), x.size(4))
         x = self.resnet18(x)
-        print("frontend")
-        print(x)
-        print(x.shape)
+        # print("frontend")
+        # print(x)
+        # print(x.shape)
         return x
 
     def forward(self, x):
@@ -155,12 +149,10 @@ class VideoCNN(nn.Module):
         x = self.visual_frontend_forward(x)
 
         #x = self.dropout(x)
-        feat = x.view(b, -1, 512)
-
         x = x.view(b, -1, 512)
-        print("forward")
-        print(x)
-        print(x.shape)
+        # print("forward")
+        # print(x)
+        # print(x.shape)
         return x
 
     def _initialize_weights(self):

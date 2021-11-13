@@ -1,18 +1,14 @@
 from torch.utils.data import Dataset
 import cv2
 import os
-import glob
 import numpy as np
-import random
 import torch
 from collections import defaultdict
-import sys
 from torch.utils.data import DataLoader
-from turbojpeg import TurboJPEG, TJPF_GRAY, TJSAMP_GRAY, TJFLAG_PROGRESSIVE
+from turbojpeg import TurboJPEG
 
 
 jpeg = TurboJPEG()
-
 
 class LRW1000_Dataset(Dataset):
 

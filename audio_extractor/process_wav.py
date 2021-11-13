@@ -1,16 +1,3 @@
-# encoding: utf-8
-
-'''
-
-@author: ZiqiLiu
-
-
-@file: process_wav.py
-
-@time: 2017/5/19 下午2:28
-
-@desc:
-'''
 import librosa
 import numpy as np
 from config.attention_config import get_config
@@ -22,13 +9,11 @@ config = get_config()
 
 # wave_train_dir = config.rawdata_path + 'train/'
 wave_train_dir = '../LRW1000_Public/audio/audio/'
-wave_valid_dir = config.rawdata_path + 'valid/'
+wave_valid_dir = '../LRW1000_Public/audio/audio/'
 wave_noise_dir = config.rawdata_path + 'noise/'
 
 save_train_dir = './train_data/'
-# save_train_dir = config.train_path
 save_valid_dir = './valid_data/'
-# save_valid_dir = config.valid_path
 save_noise_dir = config.noise_path
 
 global_len = []
@@ -39,11 +24,6 @@ label_dict = config.label_dict
 
 
 def pre_emphasis(signal, coefficient=0.97):
-    '''对信号进行预加重
-    参数含义：
-    signal:原始信号
-    coefficient:加重系数，默认为0.95
-    '''
     return np.append(signal[0], signal[1:] - coefficient * signal[:-1])
 
 
@@ -98,8 +78,6 @@ def process_mel(f):
 
 
 def make_record(f, label):
-    # print(f)
-    # print(text)
     try:
         spectrogram, wave = process_stft(f)
     except:
@@ -247,8 +225,7 @@ def generate_trainning_data(path):
                 label_list[i])
         except:
             continue
-        # print(text_list[i])
-        # print(label_values)
+
         if spec is not None:
             counter += 1
             tuple_list.append(
@@ -391,18 +368,3 @@ if __name__ == '__main__':
     validPath = './all_audio_video_20.pkl'
     generate_trainning_data(trainPath)
     generate_valid_data(validPath)
-# if __name__ == '__main__':
-#     check_dir(save_train_dir)
-#     check_dir(save_valid_dir)
-#     check_dir(save_noise_dir)
-
-#     base_pkl = 'ctc_23w.pkl'
-#     # sort_wave(wave_train_dir + base_pkl)
-#     # # shuffle(wave_train_dir + base_pkl + '.sorted')
-#     generate_trainning_data(
-#         wave_train_dir + base_pkl + '.sorted.shuffled')
-
-#     # sort_wave(wave_valid_dir + "ctc_valid_pinyin.pkl")
-#     generate_valid_data(wave_valid_dir + "ctc_valid.pkl.sorted")
-
-#     generate_noise_data(wave_noise_dir + 'noise.pkl')

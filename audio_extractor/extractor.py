@@ -10,7 +10,6 @@ from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import ops
 from tensorflow.python.ops import data_flow_ops
 from tensorflow.python.ops import random_ops
-from utils.mfcc import mfcc
 
 class DataSet(object):
     def __init__(self, config, train_dir, valid_dir, noise_dir, mode='train'):
@@ -249,12 +248,9 @@ class DataSet(object):
                     minval=0, maxval=1e-3)
                 linearspec = linearspec + noise
 
-        if self.config.mfcc:
-            melspec = mfcc(linearspec, self.config, None)
-        else:
-            if self.config.power == 2:
-                linearspec = tf.square(linearspec)
-            melspec = tf.matmul(linearspec, self.mel_basis)
+        if self.config.power == 2:
+            linearspec = tf.square(linearspec)
+        melspec = tf.matmul(linearspec, self.mel_basis)
 
         stager = data_flow_ops.StagingArea(
             [tf.float32, tf.int64, tf.int64, tf.int64, tf.int32],
@@ -265,7 +261,7 @@ class DataSet(object):
         stage_op = stager.put((melspec, label.values, label.indices,
                                label.dense_shape, seq_len))
 
-        return stager, stage_op, self.train_filequeue_enqueue_op
+        return stager, stage_op, self.train_filequeue_enqueue_op, melspec
 
     def valid_queue(self):
         with tf.device('/cpu:0'):
@@ -274,12 +270,9 @@ class DataSet(object):
             linearspec, seq_len, correctness, labels = self.valid_filequeue_reader(
                 self.valid_filename_queue)
 
-        if self.config.mfcc:
-            melspec = mfcc(linearspec, self.config, None)
-        else:
-            if self.config.power == 2:
-                linearspec = tf.square(linearspec)
-            melspec = tf.matmul(linearspec, self.mel_basis)
+        if self.config.power == 2:
+            linearspec = tf.square(linearspec)
+        melspec = tf.matmul(linearspec, self.mel_basis)
 
         stager = data_flow_ops.StagingArea(
             [tf.float32, tf.int32, tf.int64, tf.int64],
@@ -290,7 +283,7 @@ class DataSet(object):
         stage_op = stager.put(
             (melspec, seq_len, correctness, labels))
 
-        return stager, stage_op, self.valid_filequeue_enqueue_op
+        return stager, stage_op, self.valid_filequeue_enqueue_op, melspec
 
     def noise_queue(self, shuffle=True):
         with tf.device('/cpu:0'):
