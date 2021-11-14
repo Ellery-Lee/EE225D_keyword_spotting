@@ -1,9 +1,14 @@
+
+
 import librosa
 import numpy as np
 from config.attention_config import get_config
 import pickle
 import tensorflow as tf
 from utils.common import check_dir, path_join, increment_id
+
+# TODO:
+# add try-except in generating data 
 
 config = get_config()
 
@@ -178,7 +183,11 @@ def generate_valid_data(pkl_path):
     record_count = 0
     for audio_name, correctness, label in zip(audio_list, correctness_list,
                                               label_list):
-        spectrogram, wave = process_stft(path_join(wave_valid_dir, audio_name))
+        try:
+            spectrogram, wave = process_stft(
+                path_join(wave_valid_dir, audio_name+".wav"))
+        except:
+            continue
         seq_len = spectrogram.shape[0]
         label_values, _, _ = convert_label(label)
 
@@ -189,11 +198,11 @@ def generate_valid_data(pkl_path):
             tuple_list = batch_padding_valid(tuple_list)
             fname = 'valid' + increment_id(record_count, 5) + '.tfrecords'
             ex_list = [
-                make_valid_example(spec, seq_len, correctness, label_values,
+                make_valid_example(spec, seq_len, 1, label_values,
                                    audio_name) for
                 spec, seq_len, correctness, label_values, audio_name in
                 tuple_list]
-            writer = tf.python_io.TFRecordWriter(
+            writer = tf.io.TFRecordWriter(
                 path_join(save_valid_dir, fname))
             for ex in ex_list:
                 writer.write(ex.SerializeToString())
