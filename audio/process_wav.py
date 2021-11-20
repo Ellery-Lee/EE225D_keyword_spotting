@@ -1,5 +1,3 @@
-
-
 import librosa
 import numpy as np
 from config.attention_config import get_config

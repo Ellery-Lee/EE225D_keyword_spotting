@@ -7,8 +7,8 @@ from collections import defaultdict
 from torch.utils.data import DataLoader
 from turbojpeg import TurboJPEG
 
-
 jpeg = TurboJPEG()
+
 
 class LRW1000_Dataset(Dataset):
 

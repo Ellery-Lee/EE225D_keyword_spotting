@@ -1,15 +1,11 @@
+import numpy as np
+import os
+from functools import wraps
+import time
 import sys
 
 sys.path.append('../')
 sys.dont_write_bytecode = True
-
-import time
-from functools import wraps
-import os
-from glob import glob
-import numpy as np
-import tensorflow as tf
-import math
 
 
 def describe(func):
@@ -63,5 +59,6 @@ def sparse2dense(indices, values, len):
     for i, v in zip(indices, values):
         dense[i] = v
 
-def increment_id(i,n):
+
+def increment_id(i, n):
     return str(i).zfill(n)

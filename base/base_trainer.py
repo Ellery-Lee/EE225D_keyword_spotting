@@ -2,8 +2,6 @@ import torch
 from abc import abstractmethod
 from numpy import inf
 from logger import TensorboardWriter
-from tensorboardX import SummaryWriter
-import os
 from utils.util import canonical_state_dict_keys
 
 class BaseTrainer:
