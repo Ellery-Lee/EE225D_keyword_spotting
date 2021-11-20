@@ -1,5 +1,8 @@
 This is a repo for Chinese-keyword-spotting project.
 
+### Dataset
+We use the CAS-VSR-W1k(originally called LRW-1000) dataset. 
+
 ### Feature extraction
 - audio
   - process_wav.py: process the raw wav file, and generate training and validation data based on the info pkl file. Data is saved in pkl files.
@@ -10,6 +13,6 @@ This is a repo for Chinese-keyword-spotting project.
 
 ### Encoder
 
-### Similarity Map
+### Similarity Map and CNN matching
 - kws.py: the similarity map classification model
 - audio_similarity_map.py / visual_similarity_map.py: get the audio / visual features, and implement the kws.py model
