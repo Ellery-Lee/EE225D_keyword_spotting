@@ -1,16 +1,16 @@
 # encoding: utf-8
-
-import numpy as np
-import tensorflow as tf
-import math
-from utils.common import path_join
-import librosa
-from glob import glob
-from tensorflow.python.framework import dtypes
-from tensorflow.python.framework import ops
-from tensorflow.python.ops import data_flow_ops
 from tensorflow.python.ops import random_ops
-print("============")
+from tensorflow.python.ops import data_flow_ops
+from tensorflow.python.framework import ops
+from tensorflow.python.framework import dtypes
+from glob import glob
+import librosa
+from utils.common import path_join
+import math
+import tensorflow as tf
+import numpy as np
+
+
 class DataSet(object):
     def __init__(self, config, train_dir, valid_dir, noise_dir, mode='train'):
         self.config = config
@@ -306,9 +306,9 @@ class DataSet(object):
     def compute_db(self, spectrum, lengths):
         with tf.name_scope("compute_db"):
             energy = tf.reduce_sum(tf.square(spectrum), [1, 2]) / \
-                     self.config.fft_size
+                self.config.fft_size
             energy = energy / self.config.fft_size / \
-                     tf.cast(lengths, dtype=tf.float32)
+                tf.cast(lengths, dtype=tf.float32)
             db = 10 * tf.log(energy) / math.log(10)
         return db
 
