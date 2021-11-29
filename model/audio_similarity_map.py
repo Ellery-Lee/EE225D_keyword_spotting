@@ -1,3 +1,5 @@
+import sys
+sys.path.append("..")
 from audio import audio_extractor as aex
 from visual import visual_extractor as vex
 from config.attention_config import get_config
@@ -20,3 +22,5 @@ stager, stage_op, train_filequeue_enqueue_op, melspec = audio_data.batch_input_q
 _, _, feat = feature_extractor(True)
 
 #
+if __name__ == '__main__':
+    _, _, feat = feature_extractor(True)

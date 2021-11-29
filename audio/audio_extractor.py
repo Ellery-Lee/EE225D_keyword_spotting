@@ -10,7 +10,7 @@ from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import ops
 from tensorflow.python.ops import data_flow_ops
 from tensorflow.python.ops import random_ops
-
+print("============")
 class DataSet(object):
     def __init__(self, config, train_dir, valid_dir, noise_dir, mode='train'):
         self.config = config
