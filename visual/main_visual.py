@@ -18,7 +18,7 @@ args = getArgs()
 os.environ['CUDA_VISIBLE_DEVICES'] = args.gpus
 
 video_model = VideoModel(args).cuda()
-
+print('-------')
 
 def parallel_model(model):
     model = nn.DataParallel(model)
@@ -119,5 +119,5 @@ def feature_extractor(is_train):
 
 if(__name__ == '__main__'):
     acc, msg, f_v = feature_extractor(True)
-    print(f'acc={acc}')
+    # print(f'acc={acc}')
     exit()
