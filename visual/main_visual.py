@@ -1,6 +1,6 @@
 from config.visual_config import getArgs
 from visual.dataset_lrw1000 import LRW1000_Dataset as Dataset
-from video_model import VideoModel
+from visual.video_model import VideoModel
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
