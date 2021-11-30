@@ -1,3 +1,6 @@
+import sys
+sys.path.append('../')
+import pickle
 from config.visual_config import getArgs
 from visual.dataset_lrw1000 import LRW1000_Dataset as Dataset
 from visual.video_model import VideoModel
@@ -76,6 +79,7 @@ def feature_extractor(is_train):
 
     with torch.no_grad():
         dataset = Dataset(dataset_type, args)
+
         print('Start Testing, Data Length:', len(dataset))
         loader = dataset2dataloader(
             dataset, args.batch_size, args.num_workers, shuffle=False)
@@ -84,13 +88,18 @@ def feature_extractor(is_train):
         v_acc = []
         total = 0
 
+        ## open file
+        f = open('feature.pkl', 'wb')
+
         for (i_iter, input) in enumerate(loader):
+            filenames = input.get('filename')
 
             video_model.eval()
 
             tic = time.time()
             video = input.get('video').cuda(non_blocking=True)
             label = input.get('label').cuda(non_blocking=True)
+            
             total = total + video.size(0)
             border = input.get('duration').cuda(non_blocking=True).float()
 
@@ -99,6 +108,12 @@ def feature_extractor(is_train):
                     f_v, y_v = video_model(video, border)
                 else:
                     f_v, y_v = video_model(video)
+                print(f_v.shape)
+                # for-loop store (filename: feature) 
+                for i in range(len(filenames)):
+                    filename = filenames[i]
+                    feat = f_v[i]
+                    pickle.dump((filename, feat), f)
 
             v_acc.extend((y_v.argmax(-1) == label).cpu().numpy().tolist())
             toc = time.time()
@@ -110,14 +125,15 @@ def feature_extractor(is_train):
                               * (len(loader)-i_iter)/3600.0)
 
                 print(msg)
+        f.close()
 
         acc = float(np.array(v_acc).reshape(-1).mean())
         msg = 'v_acc_{:.5f}_'.format(acc)
 
-        return acc, msg, f_v
+        return acc, msg
 
 
 if(__name__ == '__main__'):
-    acc, msg, f_v = feature_extractor(True)
-    # print(f'acc={acc}')
+    acc, msg= feature_extractor(True)
+    print(f'acc={acc}')
     exit()

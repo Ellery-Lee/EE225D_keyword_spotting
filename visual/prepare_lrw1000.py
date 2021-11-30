@@ -80,7 +80,7 @@ class LRW1000_Dataset(Dataset):
             os.path.join(self.data_root, path), op, ed)
 
         result = {}
-
+        result['filename'] = path
         result['video'] = inputs
         result['label'] = int(label)
         result['duration'] = border.astype(np.bool)

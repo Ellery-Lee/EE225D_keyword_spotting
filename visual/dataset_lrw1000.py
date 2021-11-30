@@ -42,5 +42,6 @@ class LRW1000_Dataset(Dataset):
             video = CenterCrop(video, (88, 88))
 
         pkl['video'] = torch.FloatTensor(video)[:, None, ...] / 255.0
+        
 
         return pkl
