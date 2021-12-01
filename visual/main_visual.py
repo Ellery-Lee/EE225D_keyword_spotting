@@ -91,6 +91,7 @@ def feature_extractor(is_train):
         ## open file
         f = open('feature.pkl', 'wb')
 
+        file_appeared = []
         for (i_iter, input) in enumerate(loader):
             filenames = input.get('filename')
 
@@ -108,12 +109,13 @@ def feature_extractor(is_train):
                     f_v, y_v = video_model(video, border)
                 else:
                     f_v, y_v = video_model(video)
-                print(f_v.shape)
                 # for-loop store (filename: feature) 
                 for i in range(len(filenames)):
                     filename = filenames[i]
-                    feat = f_v[i]
-                    pickle.dump((filename, feat), f)
+                    if filename not in file_appeared:
+                        feat = f_v[i]
+                        pickle.dump((filename, feat), f)
+                        file_appeared.append(filename)
 
             v_acc.extend((y_v.argmax(-1) == label).cpu().numpy().tolist())
             toc = time.time()
