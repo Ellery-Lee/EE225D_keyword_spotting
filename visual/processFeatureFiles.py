@@ -5,7 +5,7 @@ def processFeatureFiles(category = "trn_1000"):
     filename = "../../LRW1000_Public/info/" + category + ".txt"
     with open(filename) as info:
         lines = info.readlines()
-
+    
     fnToWord = {}
     for line in lines:
         lineComponents = line.split(",")
@@ -16,6 +16,7 @@ def processFeatureFiles(category = "trn_1000"):
 
     f = open('feature.pkl', 'rb')
     # format: ('filename', tensor feature matrix)
+    print("begin creating files-------")
     while True:
         try:
             data = pickle.load(f)
@@ -25,7 +26,7 @@ def processFeatureFiles(category = "trn_1000"):
                 # get feature and save in the folder with "filename" and the current filename should be a counting number
                 word = fnToWord[filename] # new key
                 try:
-                    foldername =  word + '/' + category
+                    foldername =  '../features/visual/' + word + '/' + category
                     if not os.path.exists(foldername):
                         os.makedirs(foldername)
                 except OSError:
@@ -34,8 +35,8 @@ def processFeatureFiles(category = "trn_1000"):
                 feat = data[1]
 
                 for idx in range(999):   
-                    featfilename = word + '/' + category + '/' + filename + "_" + str(idx + 1) +'.pkl'
-                    if os.path.exists(featfilename):
+                    featfilename = '../features/visual/' + word + '/' + category + '/' + filename + "_" + str(idx + 1) +'.pkl'
+                    if os.path.exists(foldername + "/" + featfilename):
                         continue
                     else:
                         featFile = open(featfilename, 'wb')
