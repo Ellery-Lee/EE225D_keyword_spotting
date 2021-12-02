@@ -31,13 +31,13 @@
         "args": {
             "dataset_name": "lrw_1000",
             "split": "",
-            "cmu_dict_path": "data/vocab/lrw1000dict.json",
+            "cmu_dict_path": "data/w_py.json",
             "vis_feat_dir": ["data/feature/visual"], 
             "data_struct_path": "data/splits.json", 
             "num_phoneme_thr": 0,
             "field_vocab_paths": {
-                "graphemes": "data/vocab/grapheme_field_vocab.json",
-                "phonemes": "data/vocab/phoneme_field_vocab.json"
+                "graphemes": "data/grapheme.json",
+                "phonemes": "data/phonemes.json"
             },
             "num_words": 574414
         }

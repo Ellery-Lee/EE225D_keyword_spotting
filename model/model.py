@@ -55,7 +55,6 @@ class KWSModel(BaseModel):
         else:
             idx_max = Variable(torch.LongTensor(vis_feats.size(0)).fill_(0).cuda())
             o = o_init
-        # average o if audio-visual
         keyword_prob = torch.sigmoid(o)
         return {"max_logit": o, "odec": odec, "idx_max": indices, 
                 "keyword_prob": keyword_prob, "plot": plotted_mask, "o_logits": o_logits}
@@ -216,8 +215,7 @@ class Classifier_init(nn.Module):
         
         if self.rnn2_present ==False:
           key = self.linear_attn_keys(o) 
-          # value = []
-          value = self.linear_attn_values(o)
+          value = [] 
           query = self.linear_attn_queries(word_embedding) 
           batch_size, nb_videos, dimensions = key.size()
           attention_mask = attention(query, key, value, batch_size, nb_videos,self.num_heads, self.d_k)
@@ -245,7 +243,7 @@ class Classifier_init(nn.Module):
         else:
             o_rnn = None
             if self.shortcut:
-              o = self.conv3(attention_mask.transpose(-3,-1))                                                       # similarity map -> CNN
+              o = self.conv3(attention_mask.transpose(-3,-1)) 
               o = self.batch1(o)
               o = F.relu(o)  
               shortcut = self.project_query(query).transpose(-2,-1).unsqueeze(-2).expand(-1,-1,nb_videos,-1) 
@@ -310,7 +308,6 @@ def attention(query, key,value, batch_size, nb_v_frames, num_heads, d_k):
         attention_mask = F.softmax(attention_mask, dim=-2)
         attention_mask = attention_mask.transpose(-1,-2) 
         b, h, len_p, f = attention_mask.size()
-        # similarity map
         attention_mask = torch.matmul(attention_mask,value).view(batch_size, len_p, num_heads*d_k) 
        
     return attention_mask
