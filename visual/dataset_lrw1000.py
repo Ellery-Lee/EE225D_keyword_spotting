@@ -19,6 +19,8 @@ class LRW1000_Dataset(Dataset):
         self.phase = phase
         if(self.phase == 'train'):
             self.index_root = 'LRW1000_Public_pkl_jpeg/trn'
+        elif self.phrase == 'val':
+            self.index_root = 'LRW1000_Public_pkl_jpeg/val'
         else:
             self.index_root = 'LRW1000_Public_pkl_jpeg/tst'
 
