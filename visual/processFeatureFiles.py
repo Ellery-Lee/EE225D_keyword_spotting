@@ -1,7 +1,7 @@
 import pickle
 import os
 
-def processFeatureFiles(category = "trn_1000"):
+def processFeatureFiles(category = "tst_1000"):
     filename = "../../LRW1000_Public/info/" + category + ".txt"
     with open(filename) as info:
         lines = info.readlines()
@@ -14,12 +14,15 @@ def processFeatureFiles(category = "trn_1000"):
         if key not in fnToWord.keys():
             fnToWord[key] = value
 
-    f = open('feature.pkl', 'rb')
+    f = open('features/tst_feature.pkl', 'rb')
     # format: ('filename', tensor feature matrix)
     print("begin creating files-------")
+
+    nfeat = 0
     while True:
         try:
             data = pickle.load(f)
+            nfeat += 1
             # if in trn.txt
             filename = data[0] # filename
             if filename in fnToWord.keys():
@@ -48,6 +51,8 @@ def processFeatureFiles(category = "trn_1000"):
                     exit()
         except EOFError:
             break
+    print("No of features: ", nfeat)
 
 if __name__ == "__main__":
     processFeatureFiles()
+    

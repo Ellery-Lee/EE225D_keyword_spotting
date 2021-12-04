@@ -9,13 +9,14 @@ from trainer.trainer import Trainer
 from torch.utils.data.dataloader import default_collate
 from data_loader.datasets import DatasetV
 from torch.utils.data import DataLoader
+from torch.multiprocessing import set_start_method
 
 def collate_fn(batch):
   if True:
     return batch
   return default_collate(batch)
 
-def main(config):
+def main(config):    
     logger = config.get_logger('train')
     num_words = config["dataset"]["args"]["num_words"]
     num_phoneme_thr = config["dataset"]["args"]["num_phoneme_thr"]
@@ -32,13 +33,13 @@ def main(config):
     num_workers = config["data_loader"]["args"]["num_workers"]
 
     train_dataset = DatasetV(num_words, num_phoneme_thr, cmu_dict_path,
-        vis_feat_dir, "train", data_struct_path, p_field_path, g_field_path, False)
+        vis_feat_dir, "trn_1000", data_struct_path, p_field_path, g_field_path, False)
 
     train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size,
         num_workers=num_workers, pin_memory=pin_memory, shuffle=True, drop_last=True, collate_fn = collate_fn)
 
     val_dataset = DatasetV(num_words, num_phoneme_thr, cmu_dict_path,
-        vis_feat_dir, "val", data_struct_path, p_field_path, g_field_path, False)
+        vis_feat_dir, "val_1000", data_struct_path, p_field_path, g_field_path, False)
 
     val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size,
         num_workers=num_workers, pin_memory=pin_memory, shuffle=True, drop_last=True, collate_fn = collate_fn) 
@@ -66,6 +67,11 @@ def main(config):
 
 
 if __name__ == '__main__':
+    # try:
+    #     set_start_method('spawn')
+    # except RuntimeError:
+    #     pass
+
     args = argparse.ArgumentParser(description='PyTorch Template')
     args.add_argument('--config', required=True, help='config file path (default: None)')
     args.add_argument('--resume', help='path to latest checkpoint (default: None)')

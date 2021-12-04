@@ -2,6 +2,8 @@ visual/LRW1000_Public_pkl_jpeg
 
 visual/checkpoints
 
-visual/feature.pkl 
+visual/features
 
 data
+
+feature

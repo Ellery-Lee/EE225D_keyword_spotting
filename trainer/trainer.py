@@ -3,7 +3,7 @@ import torch
 import math
 from torchvision.utils import make_grid
 from base import BaseTrainer
-from utils import inf_loop
+from utils.util import inf_loop
 import model.loss as module_loss
 import model.metric as module_met
 from tqdm import tqdm
@@ -119,7 +119,9 @@ def transform_batch(lstV_widx_sent, word_mask, Nw, config, sample_new_neg=0.0):
                 localization_mask[i, w_st:w_end] = np.zeros(w_end-w_st)
               else:
                 print("mismatch localization mask shapes")
-            batchV[i,:lens[i],:] = lstV_widx_sent_real[vidx[i]][0].clone()
+  
+            batchV[i,:lens[i],:] = lstV_widx_sent_real[vidx[i]][0].detach().cpu().numpy().copy() ## numpy object
+            
 
     return batchV, lens, widx, target, localization_mask, localization_mask_boundaries
 
@@ -221,10 +223,11 @@ class Trainer(BaseTrainer):
           if len(count)>1:   
             input, lens, widx, target, localization_mask,localization_mask_boundaries= transform_batch(lstVwidx, self.train_dataset.get_word_mask(),
                 self.num_words, self.config)
-            target = torch.from_numpy(target).cuda(async=True)
-            input = torch.from_numpy(input).float().cuda(async=True)
-            localization_mask = torch.from_numpy(localization_mask).float().cuda(async=True)
-            widx = torch.from_numpy(widx).cuda(async=True)
+
+            target = torch.from_numpy(target).cuda(non_blocking=True)
+            input = torch.from_numpy(input).float().cuda(non_blocking=True)
+            localization_mask = torch.from_numpy(localization_mask).float().cuda(non_blocking=True)
+            widx = torch.from_numpy(widx).cuda(non_blocking=True)
             grapheme = []
             phoneme = []
             p_lens = []
@@ -353,10 +356,10 @@ class Trainer(BaseTrainer):
                 self.num_words, self.config)
             labels = np.concatenate((labels,target), axis=0)
             targetInt = target.astype('int32')
-            target = torch.from_numpy(target).cuda(async=True)
-            input = torch.from_numpy(input).float().cuda(async=True)
-            localization_mask = torch.from_numpy(localization_mask).float().cuda(async=True)
-            widx = torch.from_numpy(widx).cuda(async=True)
+            target = torch.from_numpy(target).cuda(non_blocking=True)
+            input = torch.from_numpy(input).float().cuda(non_blocking=True)
+            localization_mask = torch.from_numpy(localization_mask).float().cuda(non_blocking=True)
+            widx = torch.from_numpy(widx).cuda(non_blocking=True)
             input_var = Variable(input)
             target_var = Variable(target.view(-1,1)).float()
             grapheme = []

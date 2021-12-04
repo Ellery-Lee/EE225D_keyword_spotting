@@ -29,20 +29,20 @@ def get_LRW_split(args, split, CMUwords):
     widx_array = []
     widx = CMUwords.index(word)    
     widx_array.append(widx)
-    for filename in os.listdir(os.path.join(args.LRW_path, word, split)):
-      Fwidx = {}
-      L = filename.strip()
-      path = os.path.join(word, split, L).replace(".pkl", "")
-      Fwidx['widx']=widx_array
-      Fwidx['fn']=path
-      word_indices.append(Fwidx)
-      return word_indices
+    if os.path.exists(os.path.join(args.LRW_path, word, split)):
+      for filename in os.listdir(os.path.join(args.LRW_path, word, split)):
+        Fwidx = {}
+        L = filename.strip()
+        path = os.path.join(word, split, L).replace(".pkl", "")
+        Fwidx['widx']=widx_array
+        Fwidx['fn']=path
+        word_indices.append(Fwidx)
   return word_indices
 
 def get_LRW_splits():
   parser = argparse.ArgumentParser(description='Script for creating main splits of LRW.')
   parser.add_argument('--CMUdict_path', default='../data/LRW1000words.txt')
-  parser.add_argument('--LRW_path', default='../data/lrw_1000/features/main/') 
+  parser.add_argument('--LRW_path', default='../features/visual/') 
   parser.add_argument('--LRW_words_path', default='../data/LRW1000words.txt')
   args = parser.parse_args()
   CMUwords = get_CMU_words(args.CMUdict_path)    
@@ -50,7 +50,7 @@ def get_LRW_splits():
   Dsplits = {}
   for i,s in enumerate(S):
     Dsplits[s] = get_LRW_split(args, s, CMUwords)
-    break
+    
   with open("../data/lrw_1000/DsplitsLRW1000.json", "w") as fp:
     json.dump(Dsplits, fp)
 

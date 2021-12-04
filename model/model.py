@@ -459,8 +459,8 @@ if __name__ == "__main__":
     parser.add_argument('--beam_size', default=3, type=int)
     parser.add_argument("--dimRnn3", type=int, default=16,
                         help="dimension of hidden state of BiLSTM KWS classifier")
-    parser.add_argument("--g_size", type=int, default=34, help="size of grapheme vocab")
-    parser.add_argument("--p_size", type=int, default=73, help="size of phoneme vocab")
+    parser.add_argument("--g_size", type=int, default=800, help="size of grapheme vocab")
+    parser.add_argument("--p_size", type=int, default=510, help="size of phoneme vocab")
     parser.add_argument("--d_word_emb", type=int, default=128,
                         help="dimension of `uprojected` hidden state of the G2P model")
     parser.add_argument("--hiddenDimV", type=int, default=256)

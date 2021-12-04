@@ -9,7 +9,7 @@ import numpy as np
 import h5py
 from pathlib import Path
 import torch.utils.data
-import torchtext.data as data
+import torchtext.legacy.data as data
 import re
 from torchvision import datasets, transforms
 from base import BaseDataLoader
@@ -17,7 +17,7 @@ from base import BaseDataset
 from torch.utils.data.dataloader import default_collate
 
 
-class CMUDict(torchtext.data.Dataset):
+class CMUDict(torchtext.legacy.data.Dataset):
     def __init__(self, data_lines, word_indices, i_field, g_field, p_field):
         fields = [('idx', i_field), ('grapheme', g_field), ('phoneme', p_field)]
         examples = []  
@@ -31,7 +31,8 @@ class CMUDict(torchtext.data.Dataset):
     def splits_datasetv_test(cls, cmu_dict_path, i_field, g_field, p_field):
       with open(cmu_dict_path) as f:
         lines = f.readlines()
-      with open('data/lrw_1000/LRW1000_test_words.json', "r") as fp:
+
+      with open('/home/dongwang/EE225D_keyword_spotting/data/lrw_1000/LRW1000_tst_words.json', "r") as fp:
         widx_object = json.load(fp)
         test_words = widx_object['widx']
       test_lines = []
@@ -50,7 +51,8 @@ class CMUDict(torchtext.data.Dataset):
     def splits_datasetv_val(cls, cmu_dict_path, i_field, g_field, p_field):
       with open(cmu_dict_path) as f:
         lines = f.readlines()
-      with open('data/lrw_1000/LRW1000_val_words.json', "r") as fp:
+
+      with open('/home/dongwang/EE225D_keyword_spotting/data/lrw_1000/LRW1000_val_words.json', "r") as fp:
         widx_object = json.load(fp)
         val_words = widx_object['widx']
       val_lines = []
@@ -70,7 +72,8 @@ class CMUDict(torchtext.data.Dataset):
     def splits_dataset_train(cls, cmu_dict_path, i_field, g_field, p_field): 
       with open(cmu_dict_path) as f:
         lines = f.readlines()
-      with open('../data/lrw_1000/LRW1000_train_words.json', "r") as fp:
+
+      with open('/home/dongwang/EE225D_keyword_spotting/data/lrw_1000/LRW1000_train_words.json', "r") as fp:
         widx_object = json.load(fp)
         widx = widx_object['widx'] 
       data_lines = []
@@ -92,9 +95,9 @@ def get_splits_datasetv(cmu_dict_path, data_struct_path, splitname):
     p_field = data.Field(init_token='<os>', eos_token='</os>',
                      tokenize=(lambda x: x.split('#')[0].split()))
 
-    if splitname == "train":
+    if splitname == "trn_1000":
       Wstruct = CMUDict.splits_dataset_train(cmu_dict_path, i_field, g_field, p_field)    
-    elif splitname == "test":                  
+    elif splitname == "tst_1000":                  
       Wstruct = CMUDict.splits_datasetv_test(cmu_dict_path, i_field, g_field, p_field)
     else:
       Wstruct = CMUDict.splits_datasetv_val(cmu_dict_path, i_field, g_field, p_field)
@@ -112,8 +115,8 @@ class DatasetV(BaseDataset):
         self.data_struct_path = data_struct_path
         with open(data_struct_path, 'r') as f:
           Dstruct = json.load(f)
-        if "train" in Dstruct.keys(): 
-          self.Ntrain = len(Dstruct["train"]) 
+        if "trn_1000" in Dstruct.keys(): 
+          self.Ntrain = len(Dstruct["trn_1000"]) 
         if merge == True:         
           Dstruct = merge_train_pretrain(Dstruct) 
         self.Dstruct = Dstruct[splitname]
@@ -137,16 +140,17 @@ class DatasetV(BaseDataset):
 
     def __getitem__(self, index):
         Didx = 0
-        if self.splitname == 'train' and index>=self.Ntrain: #add later
+        if self.splitname == 'trn_1000' and index>=self.Ntrain: # Ntrain = 33728 number of training features
           Didx = 1  
         if Didx < len(self.Vpath) and index < len(self.Dstruct):
           fpath = os.path.join(self.Vpath[Didx],self.Dstruct[index]['fn']+'.pkl')
         else:
           return self.__getitem__(index+1)
+
         if not os.path.isfile(fpath):
           return self.__getitem__(index+1)
         # read from pkl file
-        f = open(fpath)
+        f = open(fpath, 'rb')
         V = pickle.load(f)
 
         # V = np.load(fpath)

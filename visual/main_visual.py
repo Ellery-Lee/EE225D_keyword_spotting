@@ -57,7 +57,7 @@ if(args.weights is not None):
 video_model = parallel_model(video_model)
 
 
-def dataset2dataloader(dataset, batch_size, num_workers, shuffle=True):
+def dataset2dataloader(dataset, batch_size, num_workers, shuffle=False):
     loader = DataLoader(dataset,
                         batch_size=batch_size,
                         num_workers=num_workers,
@@ -74,8 +74,8 @@ def add_msg(msg, k, v):
     return msg
 
 
-def feature_extractor(is_train):
-    dataset_type = 'train' if is_train else 'val'
+def feature_extractor(split):
+    dataset_type = split
 
     with torch.no_grad():
         dataset = Dataset(dataset_type, args)
@@ -89,9 +89,10 @@ def feature_extractor(is_train):
         total = 0
 
         ## open file
-        f = open('feature.pkl', 'wb')
+        f = open('features/tst_feature.pkl', 'wb')
 
         file_appeared = []
+
         for (i_iter, input) in enumerate(loader):
             filenames = input.get('filename')
 
@@ -136,6 +137,6 @@ def feature_extractor(is_train):
 
 
 if(__name__ == '__main__'):
-    acc, msg= feature_extractor(True)
+    acc, msg= feature_extractor('test')
     print(f'acc={acc}')
     exit()
