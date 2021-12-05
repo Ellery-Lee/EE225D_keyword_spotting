@@ -11,8 +11,8 @@ from utils.common import check_dir, path_join, increment_id
 config = get_config()
 
 # wave_train_dir = config.rawdata_path + 'train/'
-wave_train_dir = '../LRW1000_Public/audio/audio/'
-wave_valid_dir = '../LRW1000_Public/audio/audio/'
+wave_train_dir = '../../LRW1000_Public/audio/'
+wave_valid_dir = '../../LRW1000_Public/audio/'
 wave_noise_dir = config.rawdata_path + 'noise/'
 
 save_train_dir = './train_data/'
@@ -371,7 +371,7 @@ def shuffle(pkl_path):
 
 
 if __name__ == '__main__':
-    trainPath = './all_audio_video_80.pkl'
-    validPath = './all_audio_video_20.pkl'
+    trainPath = '../../LRW1000_Public/info/trn_1000.txt'
+    validPath = '../../LRW1000_Public/info/val_1000.txt'
     generate_trainning_data(trainPath)
     generate_valid_data(validPath)

@@ -56,7 +56,7 @@ class Config(object):
 
         # noise flags
         self.use_white_noise = False
-        self.use_bg_noise = True
+        self.use_bg_noise = False
         self.bg_noise_prob_raise = 1.05
         self.bg_decay_max_db = -6
         self.bg_decay_min_db = -20
