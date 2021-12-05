@@ -1,13 +1,14 @@
+import librosa
 from torch.utils.data import Dataset
-import cv2
+# import cv2
 import os
 import numpy as np
 import torch
-from collections import defaultdict
+# from collections import defaultdict
 from torch.utils.data import DataLoader
-from turbojpeg import TurboJPEG
+# from turbojpeg import TurboJPEG
 
-jpeg = TurboJPEG()
+# jpeg = TurboJPEG()
 
 
 class LRW1000_Dataset(Dataset):
@@ -21,69 +22,71 @@ class LRW1000_Dataset(Dataset):
         with open(index_file, 'r') as f:
             lines.extend([line.strip().split(',') for line in f.readlines()])
 
-        self.data_root = '../../LRW1000_Public/images'
-        self.padding = 40
-
+        # self.data_root = '../../LRW1000_Public/video'
+        # self.padding = 40
+        self.padding = 0
         pinyins = sorted(np.unique([line[2] for line in lines]))
         self.data = [(line[0], int(float(line[3])*25)+1, int(float(line[4])
-                      * 25)+1, pinyins.index(line[2])) for line in lines]
-        max_len = max([data[2]-data[1] for data in self.data])
-        data = list(
-            filter(lambda data: data[2]-data[1] <= self.padding, self.data))
+                      * 25)+1, pinyins.index(line[2])) for line in lines] # audioFileName,op,ed,pinyinIndex
+
+        # max_len = max([data[2]-data[1] for data in self.data])
+        # data = list(
+        #     filter(lambda data: data[2]-data[1] <= self.padding, self.data))
         self.lengths = [data[2]-data[1] for data in self.data]
         self.pinyins = pinyins
 
-        self.va_dict = self.get_video_audio_map()
-        self.class_dict = defaultdict(list)
+        # self.va_dict = self.get_video_audio_map()
+        # self.class_dict = defaultdict(list)
 
-        for item in data:
-            audio_file = self.va_dict.get(item)
-            assert(audio_file != None)
-            audio_file = '../../LRW1000_Public/audio/' + audio_file + '.wav'
-            if(os.path.exists(audio_file)):
-                item = (item[0], audio_file, item[1], item[2], item[3])
-                self.class_dict[item[-1]].append(item)
-            else:
-                print("*********found no audio file")
-                break
+        # for item in self.data:
+        #     audio_file = self.va_dict.get(item)
+        #     assert(audio_file != None)
+        #     audio_file = '../../LRW1000_Public/audio/' + audio_file + '.wav'
+        #     if(os.path.exists(audio_file)):
+        #         item = (item[0], audio_file, item[1], item[2], item[3])
+        #         self.class_dict[item[-1]].append(item)
+        #     else:
+        #         print("*********found no audio file")
+        #         break
 
-        self.data = []
-        self.unlabel_data = []
-        for k, v in self.class_dict.items():
-            n = len(v)
+        # self.data = []
+        # self.unlabel_data = []
+        # for k, v in self.class_dict.items():
+        #     n = len(v)
+        #     self.data.extend(v[:n])
 
-            self.data.extend(v[:n])
+    # def get_video_audio_map(self):
 
-    def get_video_audio_map(self):
+    #     self.anno = '../../LRW1000_Public/info/all_audio_video.txt'
+    #     with open(self.anno, 'r') as f:
+    #         lines = [line.strip() for line in f.readlines()]
+    #         lines = [line.split(',') for line in lines]
+    #         va_dict = {}
+    #         for (v, a, _, pinyin, op, ed) in lines:
+    #             op = float(op) * 25 + 1
+    #             ed = float(ed) * 25 + 1
+    #             pinyin = self.pinyins.index(pinyin)
+    #             op, ed = int(op), int(ed)
+    #             va_dict[(v, op, ed, pinyin)] = a
 
-        self.anno = '../../LRW1000_Public/info/all_audio_video.txt'
-        with open(self.anno, 'r') as f:
-            lines = [line.strip() for line in f.readlines()]
-            lines = [line.split(',') for line in lines]
-            va_dict = {}
-            for (v, a, _, pinyin, op, ed) in lines:
-                op = float(op) * 25 + 1
-                ed = float(ed) * 25 + 1
-                pinyin = self.pinyins.index(pinyin)
-                op, ed = int(op), int(ed)
-                va_dict[(v, op, ed, pinyin)] = a
-
-        return va_dict
+    #     return va_dict
 
     def __len__(self):
         return len(self.data)
 
-    def load_video(self, item):
-        # load video into a tensor
-        (path, mfcc, op, ed, label) = item
-        inputs, border = self.load_images(
-            os.path.join(self.data_root, path), op, ed)
-
+    def load_audio(self, item):
+        # load audio into a tensor
+        (path, op, ed, label) = item
+        # inputs, border = self.load_images(
+        #     os.path.join(self.data_root, path), op, ed)
+        inputs, sr = librosa.load(path)
+        border = self.getBorder(op, ed)
         result = {}
         result['filename'] = path
-        result['video'] = inputs
+        result['audio'] = inputs
         result['label'] = int(label)
         result['duration'] = border.astype(np.bool)
+        result['sr'] = sr
 
         savename = os.path.join(target_dir, f'{path}_{op}_{ed}.pkl')
         torch.save(result, savename)
@@ -91,11 +94,22 @@ class LRW1000_Dataset(Dataset):
         return True
 
     def __getitem__(self, idx):
-        r = self.load_video(self.data[idx])
+        r = self.load_audio(self.data[idx])
 
         return r
 
-    def load_images(self, path, op, ed):
+    def getBorder(self, op, ed):
+        center = (op + ed) / 2
+        length = (ed - op + 1)
+        op = int(center - self.padding // 2)
+        ed = int(op + self.padding)
+        left_border = max(int(center - length / 2 - op), 0)
+        right_border = min(int(center + length / 2 - op), self.padding)
+        border = np.zeros((40))
+        border[left_border:right_border] = 1.0
+        return border
+
+    # def load_images(self, path, op, ed):
         center = (op + ed) / 2
         length = (ed - op + 1)
 
@@ -125,8 +139,8 @@ class LRW1000_Dataset(Dataset):
 
 if(__name__ == '__main__'):
     for subset in ['trn', 'val', 'tst']:
-        target_dir = f'LRW1000_Public_pkl_jpeg/{subset}'
-        index_file = f'../../LRW1000_Public/info/{subset}_1000.txt'
+        target_dir = f'LRW1000_Public_pkl_audio/{subset}'
+        index_file = f'../config/lrw1000/audio/{subset}_1000.txt'
 
         if(not os.path.exists(target_dir)):
             os.makedirs(target_dir)

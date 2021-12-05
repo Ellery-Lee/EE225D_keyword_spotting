@@ -21,7 +21,6 @@ args = getArgs()
 os.environ['CUDA_VISIBLE_DEVICES'] = args.gpus
 
 video_model = VideoModel(args).cuda()
-print('-------')
 
 def parallel_model(model):
     model = nn.DataParallel(model)

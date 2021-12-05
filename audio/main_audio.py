@@ -2,18 +2,15 @@ import sys
 sys.path.append('../')
 import pickle
 from config.visual_config import getArgs
-from visual.dataset_lrw1000 import LRW1000_Dataset as Dataset
-from visual.video_model import VideoModel
+from dataset_lrw1000 import LRW1000_Dataset as Dataset
 import torch
-import torch.nn as nn
 from torch.utils.data import DataLoader
 import os
 import numpy as np
 import time
 from model import *
-import torch.optim as optim
 from torch.cuda.amp import autocast
-
+from audio_model import AudioModel
 
 torch.backends.cudnn.benchmark = True
 
@@ -49,25 +46,25 @@ def feature_extractor(split):
 
 
         ## open file
-        f = open('features/trn_feature.pkl', 'wb')
+        f = open('features/'+dataset_type+'_feature.pkl', 'wb')
 
         for (i_iter, input) in enumerate(loader):
             filenames = input.get('filename')
 
-            video_model.eval()
+            audio_model.eval()
 
             tic = time.time()
-            video = input.get('video').cuda(non_blocking=True)
+            audio = input.get('audio').cuda(non_blocking=True)
             label = input.get('label').cuda(non_blocking=True)
             
-            total = total + video.size(0)
+            total = total + audio.size(0)
             border = input.get('duration').cuda(non_blocking=True).float()
 
             with autocast():
                 if(args.border):
-                    f_v, y_v = video_model(video, border)
+                    f_v, y_v = audio_model(video, border)
                 else:
-                    f_v, y_v = video_model(video)
+                    f_v, y_v = audio_model(video)
                 # for-loop store (filename: feature) 
                 for i in range(len(filenames)):
                     filename = filenames[i]
