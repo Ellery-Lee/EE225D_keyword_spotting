@@ -6,7 +6,6 @@ from dataset_lrw1000 import LRW1000_Dataset as Dataset
 import torch
 from torch.utils.data import DataLoader
 import os
-import numpy as np
 import time
 from model import *
 from torch.cuda.amp import autocast
@@ -16,6 +15,9 @@ torch.backends.cudnn.benchmark = True
 
 args = getArgs()
 os.environ['CUDA_VISIBLE_DEVICES'] = args.gpus
+
+audio_model = AudioModel(args).cuda()
+
 
 def dataset2dataloader(dataset, batch_size, num_workers, shuffle=False):
     loader = DataLoader(dataset,
@@ -40,14 +42,14 @@ def feature_extractor(split):
     with torch.no_grad():
         dataset = Dataset(dataset_type, args)
 
-        print('Start Testing, Data Length:', len(dataset))
+        print('Data Length:', len(dataset))
         loader = dataset2dataloader(
             dataset, args.batch_size, args.num_workers, shuffle=False)
 
 
         ## open file
         f = open('features/'+dataset_type+'_feature.pkl', 'wb')
-
+        file_appeared = []
         for (i_iter, input) in enumerate(loader):
             filenames = input.get('filename')
 
@@ -62,9 +64,9 @@ def feature_extractor(split):
 
             with autocast():
                 if(args.border):
-                    f_v, y_v = audio_model(video, border)
+                    f_v = audio_model(audio, border)
                 else:
-                    f_v, y_v = audio_model(video)
+                    f_v = audio_model(audio)
                 # for-loop store (filename: feature) 
                 for i in range(len(filenames)):
                     filename = filenames[i]
@@ -73,25 +75,15 @@ def feature_extractor(split):
                         pickle.dump((filename, feat), f)
                         file_appeared.append(filename)
 
-            v_acc.extend((y_v.argmax(-1) == label).cpu().numpy().tolist())
             toc = time.time()
             if(i_iter % 10 == 0):
                 msg = ''
-                msg = add_msg(msg, 'v_acc={:.5f}', np.array(
-                    v_acc).reshape(-1).mean())
                 msg = add_msg(msg, 'eta={:.5f}', (toc-tic)
                               * (len(loader)-i_iter)/3600.0)
 
                 print(msg)
         f.close()
 
-        acc = float(np.array(v_acc).reshape(-1).mean())
-        msg = 'v_acc_{:.5f}_'.format(acc)
-
-        return acc, msg
-
 
 if(__name__ == '__main__'):
-    acc, msg= feature_extractor('test')
-    print(f'acc={acc}')
-    exit()
+    feature_extractor('test')
