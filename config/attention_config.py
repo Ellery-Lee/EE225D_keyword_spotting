@@ -19,8 +19,8 @@ class Config(object):
         self.graph_path = './graph/23w/'
         self.graph_name = 'graph.pb'
 
-        self.train_path = '/ssd/keyword/ctc_23w/train/'
-        self.valid_path = '/ssd/keyword/ctc_23w/valid/'
+        self.train_path = './train_data/'
+        self.valid_path = './valid_data/'
         self.noise_path = '/ssd/keyword/ctc_23w/noise/'
         self.model_name = 'latest.ckpt'
         self.rawdata_path = '/ssd/keyword_raw/'

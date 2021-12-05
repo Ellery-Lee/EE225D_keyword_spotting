@@ -21,15 +21,13 @@ class LRW1000_Dataset(Dataset):
         with open(index_file, 'r') as f:
             lines.extend([line.strip().split(',') for line in f.readlines()])           ## lines: all-audio-image
 
-        self.data_root = '../../LRW1000_Public/images'
-        self.padding = 40
+        self.data_root = '../../LRW1000_Public/audio'
 
         pinyins = sorted(np.unique([line[2] for line in lines]))
         self.data = [(line[0], int(float(line[3])*25)+1, int(float(line[4])             ## image filename, op, ed, pinyin
                       * 25)+1, pinyins.index(line[2])) for line in lines]
         max_len = max([data[2]-data[1] for data in self.data])
-        data = list(
-            filter(lambda data: data[2]-data[1] <= self.padding, self.data))
+        data = self.data
         self.lengths = [data[2]-data[1] for data in self.data]
         self.pinyins = pinyins
 
@@ -76,6 +74,7 @@ class LRW1000_Dataset(Dataset):
     def load_video(self, item):
         # load video into a tensor
         (path, mfcc, op, ed, label) = item
+        # image filename, audio filename+extend, start, end, pinyin
         inputs, border = self.load_images(
             os.path.join(self.data_root, path), op, ed)
 
