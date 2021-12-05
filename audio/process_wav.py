@@ -1,18 +1,21 @@
-import librosa
-import numpy as np
-from config.attention_config import get_config
-import pickle
-import tensorflow as tf
+import sys
+sys.path.append('../')
 from utils.common import check_dir, path_join, increment_id
+import librosa
+import tensorflow as tf
+import pickle
+from config.attention_config import get_config
+import numpy as np
+import os
 
 # TODO:
-# add try-except in generating data 
+# add try-except in generating data
 
 config = get_config()
 
 # wave_train_dir = config.rawdata_path + 'train/'
-wave_train_dir = '../LRW1000_Public/audio/audio/'
-wave_valid_dir = '../LRW1000_Public/audio/audio/'
+wave_train_dir = '../LRW1000_Public/audio/'
+wave_valid_dir = '../LRW1000_Public/audio/'
 wave_noise_dir = config.rawdata_path + 'noise/'
 
 save_train_dir = './train_data/'
@@ -59,7 +62,7 @@ def process_stft(f):
             y = pre_emphasis(y)
         linearspec = np.transpose(np.abs(
             librosa.core.stft(y, config.fft_size,
-                            config.hop_size)))
+                              config.hop_size)))
     except:
         raise Exception("process_stft failed: " + len(y))
 
@@ -168,13 +171,12 @@ def batch_padding_valid(tup_list):
     return new_list
 
 
-def generate_valid_data(pkl_path):
-    with open(pkl_path, 'rb') as f:
-        wav_list = pickle.load(f)
-    print('read pkl from %s' % f)
-    audio_list = [i[0] for i in wav_list]
-    correctness_list = [i[1] for i in wav_list]
-    label_list = [i[2] for i in wav_list]
+def generate_valid_data(path):
+    with open(path) as f:
+        wav_list = f.readlines()
+    audio_list = [i.split(',')[0] for i in wav_list]
+    correctness_list = [i.split(',')[1] for i in wav_list]
+    label_list = [i.split(',')[2] for i in wav_list]
     assert len(audio_list) == len(correctness_list)
     tuple_list = []
     counter = 0
@@ -194,7 +196,7 @@ def generate_valid_data(pkl_path):
         counter += 1
         if counter == config.tfrecord_size:
             tuple_list = batch_padding_valid(tuple_list)
-            fname = 'valid' + increment_id(record_count, 5) + '.tfrecords'
+            fname = audio_name + '.tfrecords'
             ex_list = [
                 make_valid_example(spec, seq_len, 1, label_values,
                                    audio_name) for
@@ -213,12 +215,11 @@ def generate_valid_data(pkl_path):
 
 
 def generate_trainning_data(path):
-    with open(path, 'rb') as f:
-        wav_list = pickle.load(f)
-    print('read pkl from %s' % f)
-    audio_list = [i[0] for i in wav_list]
-    label_list = [i[2] for i in wav_list]
-    text_list = [i[1] for i in wav_list]
+    with open(path) as f:
+        wav_list = f.readlines()
+    audio_list = [i.split(',')[0] for i in wav_list]
+    label_list = [i.split(',')[2] for i in wav_list]
+    text_list = [i.split(',')[1] for i in wav_list]
     # label_list = [i[1] for i in wav_list]
     # text_list = [i[2] for i in wav_list]
     assert len(audio_list) == len(text_list)
@@ -227,9 +228,8 @@ def generate_trainning_data(path):
     record_count = 0
     for i, audio_name in enumerate(audio_list):
         try:
-            spec, seq_len, label_values, label_indices, label_shape = make_record(
-                path_join(wave_train_dir, audio_name+".wav"),
-                label_list[i])
+            filedir = path_join(wave_train_dir, audio_name+".wav")
+            spec, seq_len, label_values, label_indices, label_shape = make_record(filedir,label_list[i])
         except:
             continue
 
@@ -239,12 +239,12 @@ def generate_trainning_data(path):
                 (spec, seq_len, label_values, label_indices, label_shape))
         if counter == config.tfrecord_size:
             tuple_list = batch_padding_trainning(tuple_list)
-            fname = 'data' + increment_id(record_count, 5) + '.tfrecords'
+            fname = audio_name + '.tfrecords'
             try:
                 ex_list = [make_trainning_example(spec, seq_len, label_values,
-                                                label_indices, label_shape) for
-                        spec, seq_len, label_values, label_indices, label_shape
-                        in tuple_list]
+                                                  label_indices, label_shape) for
+                           spec, seq_len, label_values, label_indices, label_shape
+                           in tuple_list]
             except:
                 counter = 0
                 tuple_list.clear()
@@ -318,60 +318,8 @@ def sort_wave(pkl_path):
     print(len(y))
 
 
-def shuffle(pkl_path):
-    import random
-    new_list = []
-    batch = 4096
-    with open(pkl_path, 'rb') as f:
-        wave_list = pickle.load(f)
-    total = 0
-
-    for i in range(len(wave_list) // batch):
-        print('batch', i)
-
-        temp = wave_list[i * batch:(i + 1) * batch]
-        # flag = False
-        # for k in temp:
-        #     if len(k[1]) > 0:
-        #         flag = True
-        #         break
-        # if not flag:
-        #     print('fuck', i)
-
-        ok = False
-        again = 0
-
-        while not ok and again < 100:
-            count = 0
-            random.shuffle(temp)
-            c = 0
-            for j in range(batch // 32):
-                subok = False
-                small_batch = temp[j * 32:(j + 1) * 32]
-                for record in small_batch:
-                    if '你好' in record[2] or '乐乐' in record[2]:
-                        subok = True
-                        break
-                if subok:
-                    c += 1
-                    continue
-                else:
-                    print(i, 'again')
-                    again += 1
-                    break
-
-            if c == batch // 32:
-                ok = True
-        new_list.extend(temp)
-    print(len(wave_list))
-    new_list.extend(wave_list[len(wave_list) // batch * batch:])
-    print(len(new_list))
-    with open(pkl_path + '.shuffled', "wb") as f:
-        pickle.dump(new_list, f)
-
-
 if __name__ == '__main__':
-    trainPath = './all_audio_video_80.pkl'
-    validPath = './all_audio_video_20.pkl'
+    trainPath = '../config/lrw1000/audio/trn_1000.txt'
+    validPath = '../config/lrw1000/audio/val_1000.txt'
     generate_trainning_data(trainPath)
     generate_valid_data(validPath)

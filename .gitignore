@@ -7,3 +7,8 @@ visual/features
 data
 
 feature
+
+LRW1000_Public
+
+audio/train_data
+audio/valid_data

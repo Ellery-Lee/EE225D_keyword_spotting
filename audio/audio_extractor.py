@@ -1,14 +1,14 @@
 # encoding: utf-8
-from tensorflow.python.ops import random_ops
-from tensorflow.python.ops import data_flow_ops
-from tensorflow.python.framework import ops
-from tensorflow.python.framework import dtypes
 from glob import glob
 import librosa
 from utils.common import path_join
 import math
 import tensorflow as tf
-import numpy as np
+from tensorflow.python.ops import random_ops
+from tensorflow.python.ops import data_flow_ops
+from tensorflow.python.framework import ops
+from tensorflow.python.framework import dtypes
+tf.compat.v1.disable_eager_execution()
 
 
 class DataSet(object):
@@ -32,13 +32,14 @@ class DataSet(object):
             self.train_file_size = len(self.train_filename)
             if self.train_file_size == 0:
                 raise Exception('train tfrecords not found')
-            self.train_reader = tf.TFRecordReader(name='train_reader')
+            self.train_reader = tf.compat.v1.TFRecordReader(name="train_reader")
             self.epoch = self.epochs_completed
             print('file size', self.train_file_size)
 
             if config.use_bg_noise:
                 self.noise_filename = glob(path_join(noise_dir, '*.tfrecords'))
-                self.noise_reader = tf.TFRecordReader(name='noise_reader')
+                self.noise_reader = tf.data.TFRecordDataset(
+                    name='noise_reader')
                 if len(self.noise_filename) == 0:
                     raise Exception(
                         'noise tfrecords not found. Or disable noise option')
@@ -48,7 +49,7 @@ class DataSet(object):
         self.valid_file_size = len(self.valid_filename)
         if self.valid_file_size == 0:
             raise Exception('valid tfrecords not found')
-        self.valid_reader = tf.TFRecordReader(name='valid_reader')
+        self.valid_reader = tf.compat.v1.TFRecordReader(name="valid_reader")
         self.validation_size = len(self.valid_filename) * config.tfrecord_size
         print('validation size', self.validation_size)
 
@@ -60,21 +61,21 @@ class DataSet(object):
         (keys, values) = self.train_reader.read_up_to(filename_queue,
                                                       self.config.batch_size)
         label_features = {
-            "label_indices": tf.VarLenFeature(dtype=tf.int64),
-            "label_values": tf.VarLenFeature(dtype=tf.int64),
-            "label_shape": tf.FixedLenFeature([1], dtype=tf.int64),
-            "seq_len": tf.FixedLenFeature([1], dtype=tf.int64)
+            "label_indices": tf.io.VarLenFeature(dtype=tf.int64),
+            "label_values": tf.io.VarLenFeature(dtype=tf.int64),
+            "label_shape": tf.io.FixedLenFeature([1], dtype=tf.int64),
+            "seq_len": tf.io.FixedLenFeature([1], dtype=tf.int64)
         }
         audio_features = {
-            "audio": tf.FixedLenSequenceFeature([self.last_dim],
-                                                dtype=tf.float32)
+            "audio": tf.io.FixedLenSequenceFeature([self.last_dim],
+                                                   dtype=tf.float32)
         }
         audio_list = []
         label_list = []
         len_list = []
 
         for i in range(self.config.batch_size):
-            context, sequence = tf.parse_single_sequence_example(
+            context, sequence = tf.io.parse_single_sequence_example(
                 serialized=values[i],
                 context_features=label_features,
                 sequence_features=audio_features
@@ -85,14 +86,14 @@ class DataSet(object):
             label_indices = context['label_indices']
             label_shape = context['label_shape']
 
-            label_indices = tf.sparse_tensor_to_dense(
-                tf.sparse_reshape(label_indices, [-1, 1]))
-            label_values = tf.sparse_tensor_to_dense(label_values)
+            label_indices = tf.compat.v1.sparse_tensor_to_dense(
+                tf.compat.v1.sparse_reshape(label_indices, [-1, 1]))
+            label_values = tf.compat.v1.sparse_tensor_to_dense(label_values)
 
             sparse_label = tf.SparseTensor(label_indices, label_values,
                                            label_shape)
             # then we can sparse_concat at axis 0
-            sparse_label = tf.sparse_reshape(sparse_label, [1, -1])
+            sparse_label = tf.compat.v1.sparse_reshape(sparse_label, [1, -1])
 
             audio_list.append(audio)
             label_list.append(sparse_label)
@@ -101,8 +102,8 @@ class DataSet(object):
         seq_lengths = tf.cast(tf.reshape(tf.stack(len_list, name='seq_lengths'),
                                          (-1,)), tf.int32)
         audio_tensor = tf.stack(audio_list, name='input_audio')
-        label_tensor = tf.sparse_concat(0, label_list,
-                                        expand_nonconcat_dim=True)
+        label_tensor = tf.compat.v1.sparse_concat(0, label_list,
+                                                  expand_nonconcat_dim=True)
 
         return audio_tensor, label_tensor, seq_lengths
 
@@ -111,14 +112,14 @@ class DataSet(object):
                                                       self.config.batch_size,
                                                       name='read_noise')
         audio_features = {
-            "audio": tf.FixedLenSequenceFeature([self.last_dim],
-                                                dtype=tf.float32)
+            "audio": tf.io.FixedLenSequenceFeature([self.last_dim],
+                                                   dtype=tf.float32)
         }
         audio_list = []
         len_list = []
 
         for i in range(self.config.batch_size):
-            context, sequence = tf.parse_single_sequence_example(
+            context, sequence = tf.io.parse_single_sequence_example(
                 serialized=values[i],
                 sequence_features=audio_features
             )
@@ -135,13 +136,13 @@ class DataSet(object):
         (keys, values) = self.valid_reader.read_up_to(filename_queue,
                                                       self.config.batch_size)
         context_features = {
-            "seq_len": tf.FixedLenFeature([1], dtype=tf.int64),
-            "correctness": tf.FixedLenFeature([1], dtype=tf.int64),
+            "seq_len": tf.io.FixedLenFeature([1], dtype=tf.int64),
+            "correctness": tf.io.FixedLenFeature([1], dtype=tf.int64),
             "label": tf.VarLenFeature(dtype=tf.int64)
         }
         audio_features = {
-            "audio": tf.FixedLenSequenceFeature([self.last_dim],
-                                                dtype=tf.float32)
+            "audio": tf.io.FixedLenSequenceFeature([self.last_dim],
+                                                   dtype=tf.float32)
         }
         audio_list = []
         len_list = []
@@ -149,7 +150,7 @@ class DataSet(object):
         label_list = []
 
         for i in range(self.config.batch_size):
-            context, sequence = tf.parse_single_sequence_example(
+            context, sequence = tf.io.parse_single_sequence_example(
                 serialized=values[i],
                 context_features=context_features,
                 sequence_features=audio_features
@@ -165,7 +166,7 @@ class DataSet(object):
 
             correct_list.append(correct)
 
-        label_tensor = tf.sparse_tensor_to_dense(
+        label_tensor = tf.compat.v1.sparse_tensor_to_dense(
             tf.sparse_concat(0, label_list, expand_nonconcat_dim=True), -1)
         seq_lengths = tf.cast(
             tf.reshape(tf.stack(len_list), (-1,), name='seq_lengths'), tf.int32)
@@ -183,9 +184,11 @@ class DataSet(object):
             if shuffle:
                 input_tensor = random_ops.random_shuffle(input_tensor,
                                                          seed=seed)
-            q = data_flow_ops.FIFOQueue(
+            q = tf.queue.FIFOQueue(
                 capacity=capacity,
                 dtypes=[input_tensor.dtype.base_dtype])
+            q.enqueue_many(input_tensor)
+            print("q=",q.dequeue(),q.dequeue_many(10))
             enq = tf.cond(tf.less(q.size(), 2),
                           lambda: q.enqueue_many([input_tensor]),
                           lambda: tf.no_op())
