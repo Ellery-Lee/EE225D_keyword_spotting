@@ -53,25 +53,23 @@ def feature_extractor(split):
         for (i_iter, input) in enumerate(loader):
             filenames = input.get('filename')
 
-            audio_model.eval()
-
             tic = time.time()
             audio = input.get('audio').cuda(non_blocking=True)
-            label = input.get('label').cuda(non_blocking=True)
+            # label = input.get('label').cuda(non_blocking=True)
             
             total = total + audio.size(0)
             border = input.get('duration').cuda(non_blocking=True).float()
 
             with autocast():
                 if(args.border):
-                    f_v = audio_model(audio, border)
+                    audioFeature = audio_model(audio, border)
                 else:
-                    f_v = audio_model(audio)
+                    audioFeature = audio_model(audio)
                 # for-loop store (filename: feature) 
                 for i in range(len(filenames)):
                     filename = filenames[i]
                     if filename not in file_appeared:
-                        feat = f_v[i]
+                        feat = audioFeature[i]
                         pickle.dump((filename, feat), f)
                         file_appeared.append(filename)
 

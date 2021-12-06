@@ -88,10 +88,10 @@ class LRW1000_Dataset(Dataset):
         result['duration'] = border.astype(np.bool)
         result['sr'] = sr
 
-        savename = os.path.join(target_dir, f'{path}_{op}_{ed}.pkl')
-        torch.save(result, savename)
+        # savename = os.path.join(target_dir, f'{path}_{op}_{ed}.pkl')
+        # torch.save(result, savename)
 
-        return True
+        return result
 
     def __getitem__(self, idx):
         r = self.load_audio(self.data[idx])

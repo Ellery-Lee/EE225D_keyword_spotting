@@ -9,7 +9,7 @@ class AudioModel(nn.Module):
         super(AudioModel, self).__init__()
         self.args = args
 
-    def forward(self, audio, boarder=None):
+    def forward(self, audio, border=None):
         scale, sr = librosa.load(audio)
         mel_spectrogram = librosa.feature.melspectrogram(scale, sr=sr, n_fft=2048, hop_length=512, n_mels=10)
         log_mel_spectrogram = librosa.power_to_db(mel_spectrogram)
