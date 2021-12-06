@@ -45,7 +45,9 @@ def feature_extractor(split):
         print('Data Length:', len(dataset))
         loader = dataset2dataloader(
             dataset, args.batch_size, args.num_workers, shuffle=False)
-
+        
+        print('start testing')
+        total = 0
 
         ## open file
         f = open('features/'+dataset_type+'_feature.pkl', 'wb')
@@ -55,17 +57,21 @@ def feature_extractor(split):
 
             tic = time.time()
             audio = input.get('audio').cuda(non_blocking=True)
+            audio_npy = audio.detach().cpu().numpy()
+    
             sr = input.get('sr').cuda(non_blocking=True)
+            sr_npy = sr.detach().cpu().numpy()
             # label = input.get('label').cuda(non_blocking=True)
             
             total = total + audio.size(0)
             border = input.get('duration').cuda(non_blocking=True).float()
+            border_npy = border.detach().cpu().numpy()
 
             with autocast():
                 if(args.border):
-                    audioFeature = audio_model(audio, sr, border)
+                    audioFeature = audio_model(audio_npy, sr_npy, border_npy)
                 else:
-                    audioFeature = audio_model(audio, sr)
+                    audioFeature = audio_model(audio_npy, sr_npy)
                 # for-loop store (filename: feature) 
                 for i in range(len(filenames)):
                     filename = filenames[i]

@@ -84,7 +84,7 @@ class LRW1000_Dataset(Dataset):
         except:
             inputs = np.zeros()
             sr = 16000
-        maxlength = 32000
+        maxlength = 42400
         if len(inputs) < maxlength:
             pad = np.zeros(maxlength - len(inputs))
             inputs = np.concatenate((inputs, pad))
