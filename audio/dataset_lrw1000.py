@@ -13,13 +13,13 @@ from torch.utils.data import DataLoader
 
 class LRW1000_Dataset(Dataset):
 
-    def __init__(self, index_file, target_dir):
+    def __init__(self, split, target_dir):
         self.data = []
-        self.index_file = index_file
+        self.index_file = '../config/lrw1000/audio/' + split + '.txt'
         self.target_dir = target_dir
         lines = []
 
-        with open(index_file, 'r') as f:
+        with open(self.index_file, 'r') as f:
             lines.extend([line.strip().split(',') for line in f.readlines()])
 
         # self.data_root = '../../LRW1000_Public/video'
@@ -79,7 +79,15 @@ class LRW1000_Dataset(Dataset):
         (path, op, ed, label) = item
         # inputs, border = self.load_images(
         #     os.path.join(self.data_root, path), op, ed)
-        inputs, sr = librosa.load(path)
+        try:
+            inputs, sr = librosa.load('../../LRW1000_Public/audio/' + path + '.wav', sr=16000)
+        except:
+            inputs = np.zeros()
+            sr = 16000
+        maxlength = 32000
+        if len(inputs) < maxlength:
+            pad = np.zeros(maxlength - len(inputs))
+            inputs = np.concatenate((inputs, pad))
         border = self.getBorder(op, ed)
         result = {}
         result['filename'] = path
@@ -138,23 +146,36 @@ class LRW1000_Dataset(Dataset):
 
 
 if(__name__ == '__main__'):
-    for subset in ['trn', 'val', 'tst']:
-        target_dir = f'LRW1000_Public_pkl_audio/{subset}'
-        index_file = f'../config/lrw1000/audio/{subset}_1000.txt'
+    # for subset in ['trn', 'val', 'tst']:
+    #     target_dir = f'LRW1000_Public_pkl_audio/{subset}'
+    #     index_file = f'../config/lrw1000/audio/{subset}_1000.txt'
 
-        if(not os.path.exists(target_dir)):
-            os.makedirs(target_dir)
+    #     if(not os.path.exists(target_dir)):
+    #         os.makedirs(target_dir)
 
-        dataset = LRW1000_Dataset(index_file, target_dir)
-        loader = DataLoader(dataset,
-                            batch_size=96,
-                            num_workers=16,
-                            shuffle=False,
-                            drop_last=False)
+    #     dataset = LRW1000_Dataset(index_file, target_dir)
+    #     loader = DataLoader(dataset,
+    #                         batch_size=96,
+    #                         num_workers=16,
+    #                         shuffle=False,
+    #                         drop_last=False)
 
-        import time
-        tic = time.time()
-        for i, batch in enumerate(loader):
-            toc = time.time()
-            eta = ((toc - tic) / (i + 1) * (len(loader) - i)) / 3600.0
-            print(f'eta:{eta:.5f}')
+    #     import time
+    #     tic = time.time()
+    #     for i, batch in enumerate(loader):
+    #         toc = time.time()
+    #         eta = ((toc - tic) / (i + 1) * (len(loader) - i)) / 3600.0
+    #         print(f'eta:{eta:.5f}')
+    import soundfile as sf
+    
+    dir = '../../LRW1000_Public/audio'
+
+    max_audio_length = 0
+    dirlist = os.listdir(dir)
+    for i in range(len(dirlist)):
+        audio, sr = librosa.load(dir + "/" + dirlist[i], sr=16000)
+        max_audio_length = max(max_audio_length, len(audio))
+        if i % 100 == 0:
+            print("processing", i)
+            print("maxlength: ", max_audio_length)
+    print(max_audio_length)

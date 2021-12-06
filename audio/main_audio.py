@@ -55,6 +55,7 @@ def feature_extractor(split):
 
             tic = time.time()
             audio = input.get('audio').cuda(non_blocking=True)
+            sr = input.get('sr').cuda(non_blocking=True)
             # label = input.get('label').cuda(non_blocking=True)
             
             total = total + audio.size(0)
@@ -62,9 +63,9 @@ def feature_extractor(split):
 
             with autocast():
                 if(args.border):
-                    audioFeature = audio_model(audio, border)
+                    audioFeature = audio_model(audio, sr, border)
                 else:
-                    audioFeature = audio_model(audio)
+                    audioFeature = audio_model(audio, sr)
                 # for-loop store (filename: feature) 
                 for i in range(len(filenames)):
                     filename = filenames[i]
@@ -84,4 +85,4 @@ def feature_extractor(split):
 
 
 if(__name__ == '__main__'):
-    feature_extractor('test')
+    feature_extractor('trn_1000')

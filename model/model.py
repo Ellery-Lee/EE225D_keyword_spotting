@@ -36,7 +36,7 @@ class KWSModel(BaseModel):
         )
         self.classifier_BE = Classifier_BE(hiddenDNNV=hiddenDNNV, dimRnn3=dimRnn3)
 
-    def forward(self, epoch, vis_feats, vis_feat_lens, p_lengths, graphemes, phonemes, use_BE_localiser, config):
+    def forward(self, epoch, vis_feats, vis_feat_lens, p_lengths, graphemes, phonemes, use_BE_localiser, config):               ### audio, visual
         if epoch == config["data_loader"]["args"]["start_BEloc_epoch"]:
           for param in self.classifier_init.parameters():
             param.requires_grad = False
