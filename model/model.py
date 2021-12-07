@@ -43,6 +43,7 @@ class KWSModel(BaseModel):
         else:
           for param in self.classifier_init.parameters():
             param.requires_grad = True 
+        
         odec, vis_feat_lens, o_init, o_rnn, plotted_mask, o_logits, indices = self.classifier_init(
             x=vis_feats,
             x_lengths=vis_feat_lens,
@@ -58,6 +59,7 @@ class KWSModel(BaseModel):
         keyword_prob = torch.sigmoid(o)
         return {"max_logit": o, "odec": odec, "idx_max": indices, 
                 "keyword_prob": keyword_prob, "plot": plotted_mask, "o_logits": o_logits}
+        
 
 class Classifier_init(nn.Module):
     def __init__(self, inputDimV, hiddenDimV, birnnV, d_word_emb, outdpV, hiddenDNNV,
@@ -171,7 +173,7 @@ class Classifier_init(nn.Module):
         batch_size = x.data.size(0)
         if len(x.data.size())==1:
           import pdb; pdb.set_trace()
-        T = x.data.size(1)
+        T = x.data.size(1)      # T = 40
         if self.g2p:
             emb, all_emb = self.enc_dec.encoder(grapheme)
             odec, _, __ = self.enc_dec.decoder(
@@ -204,7 +206,7 @@ class Classifier_init(nn.Module):
             mask = torch.cat((mask, mask), 0)
             mask = Variable(mask.cuda())
             x = x.mul(mask)
- 
+
         pack = torch.nn.utils.rnn.pack_padded_sequence(x, x_lengths, batch_first=True)
         o, _ = self.rnn1(pack)
         o, _ = torch.nn.utils.rnn.pad_packed_sequence(o, batch_first=True)
@@ -251,7 +253,16 @@ class Classifier_init(nn.Module):
               o = self.conv1(o.transpose(-2,-1))        
               o = self.batch2(o) 
               o = F.relu(o)
-              o = self.max_pool(o) 
+              if o.shape[2] < 2:
+                  max_pool_sub = nn.MaxPool2d((1,2), stride=(1,2))
+                  o = max_pool_sub(o)
+              else:
+                  o = self.max_pool(o)
+            #   try:
+            #     o = self.max_pool(o) 
+            #   except:
+            #     raise Exception('This is the exception you expect to handle')
+              print(o.shape)
               o = self.conv2(o)
               o = self.batch3(o) 
               o = F.relu(o)

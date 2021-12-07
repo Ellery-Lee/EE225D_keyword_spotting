@@ -32,7 +32,7 @@ class CMUDict(torchtext.legacy.data.Dataset):
       with open(cmu_dict_path) as f:
         lines = f.readlines()
 
-      with open('/home/dongwang/EE225D_keyword_spotting/data/lrw_1000/LRW1000_tst_words.json', "r") as fp:
+      with open('/home/dongwang/EE225D_keyword_spotting/data/lrw_1000/LRW1000_test_words.json', "r") as fp:
         widx_object = json.load(fp)
         test_words = widx_object['widx']
       test_lines = []
