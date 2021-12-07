@@ -12,8 +12,8 @@
             "birnnV": true,
             "d_word_emb": 128,
             "outdpV": 0.2,
-            "p_size": 73,
-            "g_size": 34,
+            "p_size": 510,
+            "g_size": 800,
             "d_embed": 64,
             "d_hidden": 500,
             "embDO": 0,
@@ -30,16 +30,16 @@
         "type": "DatasetV", 
         "args": {
             "dataset_name": "lrw_1000",
-            "split": "test",
-            "cmu_dict_path": "data/w_py.json",
-            "vis_feat_dir":"data/lrs2/features/main/", 
-            "data_struct_path": "data/lrs2/DsplitsLRS2.json", 
-            "num_phoneme_thr": 6,
+            "split": "tst_1000",
+            "cmu_dict_path": "data/LRWDict.txt",
+            "vis_feat_dir":["feature/visual"], 
+            "data_struct_path": "data/lrw_1000/DsplitsLRW1000.json", 
+            "num_phoneme_thr": 0,
             "field_vocab_paths": {
-                "graphemes": "data/vocab/graphemes.json",
-                "phonemes": "data/vocab/phonemes.json"
+                "graphemes": "data/graphemes.json",
+                "phonemes": "data/phonemes.json"
             },
-            "num_words": 135091
+            "num_words": 1184
         }
     },
     "data_loader": {
@@ -47,8 +47,8 @@
             "batch_size": 40,
             "shuffle": false,
             "drop_last": false,
-            "pin_memory": true,
-            "num_workers": 4,
+            "pin_memory": false,
+            "num_workers": 0,
             "start_BEloc_epoch": 200
         }
     },
