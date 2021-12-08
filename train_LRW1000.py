@@ -33,13 +33,13 @@ def main(config):
     num_workers = config["data_loader"]["args"]["num_workers"]
 
     train_dataset = DatasetV(num_words, num_phoneme_thr, cmu_dict_path,
-        vis_feat_dir, "trn", data_struct_path, p_field_path, g_field_path, False)
+        vis_feat_dir, "trn_1000", data_struct_path, p_field_path, g_field_path, False)
 
     train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size,
         num_workers=num_workers, pin_memory=pin_memory, shuffle=True, drop_last=True, collate_fn = collate_fn)
 
     val_dataset = DatasetV(num_words, num_phoneme_thr, cmu_dict_path,
-        vis_feat_dir, "val", data_struct_path, p_field_path, g_field_path, False)
+        vis_feat_dir, "val_1000", data_struct_path, p_field_path, g_field_path, False)
 
     val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size,
         num_workers=num_workers, pin_memory=pin_memory, shuffle=True, drop_last=True, collate_fn = collate_fn) 

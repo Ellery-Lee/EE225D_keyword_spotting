@@ -46,7 +46,7 @@ def get_LRW_splits():
   parser.add_argument('--LRW_words_path', default='../data/20/vocab/LRW1000words.txt')
   args = parser.parse_args()
   CMUwords = get_CMU_words(args.CMUdict_path)    
-  S = ['trn', 'val', 'tst']
+  S = ['trn_1000', 'val_1000', 'tst_1000']
   Dsplits = {}
   for i,s in enumerate(S):
     Dsplits[s] = get_LRW_split(args, s, CMUwords)

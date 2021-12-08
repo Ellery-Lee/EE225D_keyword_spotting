@@ -53,7 +53,7 @@ We use the CAS-VSR-W1k(originally called LRW-1000) dataset.
 
 ### Training
 ```bash
-python train_LRW1000.py --config=./config/lrs1000/train.json 
+python train_LRW1000.py --config=./config/lrw1000/train.json 
 ```
 ### Testing
 ```bash

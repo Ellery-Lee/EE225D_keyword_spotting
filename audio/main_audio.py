@@ -47,7 +47,7 @@ def feature_extractor(split):
         loader = dataset2dataloader(
             dataset, args.batch_size, args.num_workers, shuffle=False)
         
-        model = Wav2Vec2ForSequenceClassification.from_pretrained("facebook/wav2vec2-base-960h")
+        # model = Wav2Vec2ForSequenceClassification.from_pretrained("facebook/wav2vec2-base-960h")
         feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained("facebook/wav2vec2-base-960h") # superb/wav2vec2-base-superb-ks
         
         print('model prepared, start testing')
@@ -95,4 +95,4 @@ def feature_extractor(split):
 
 
 if(__name__ == '__main__'):
-    feature_extractor('trn_1000_20')
+    feature_extractor('val_1000_20')

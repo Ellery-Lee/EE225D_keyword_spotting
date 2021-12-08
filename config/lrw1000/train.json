@@ -12,8 +12,8 @@
             "birnnV": true,
             "d_word_emb": 128,
             "outdpV": 0.2,
-            "p_size": 212,
-            "g_size": 254,
+            "p_size": 83,
+            "g_size": 86,
             "d_embed": 64,
             "d_hidden": 500,
             "embDO": 0,
@@ -39,7 +39,7 @@
                 "graphemes": "data/20/vocab/graphemes.json",
                 "phonemes": "data/20/vocab/phonemes.json"
             },
-            "num_words": 192
+            "num_words": 50
         }
     },
     "data_loader": {

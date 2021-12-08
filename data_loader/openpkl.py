@@ -9,7 +9,7 @@ from transformers import Wav2Vec2ForSequenceClassification, Wav2Vec2FeatureExtra
 vpath="/home/dongwang/EE225D_keyword_spotting/features/visual/一/tst_1000/1b9c1fb384ca25fe5c4f4c1e7a5ce44e_1.pkl"
 dirlist = ["7fe67cee831a62a64a74de412c8bc7f5", "269c04dac28abe3cfc7f7315df7defaa", "0ab8d4fdd2a9eb55b0b91ec5393e06be", "0e5ee912a00e4f9e979a033fc01b6d21"]
 fpath = "/home/dongwang/EE225D_keyword_spotting/feature/audio/一样/tst/7fe67cee831a62a64a74de412c8bc7f5_1.pkl"
-test = "/home/dongwang/EE225D_keyword_spotting/feature/audio/扫描/tst_1000/4c48f3c07af503aa7704fbd25fdf0448_1.pkl"
+test = "/home/dongwang/EE225D_keyword_spotting/feature/audio/一样/tst_1000/7fe67cee831a62a64a74de412c8bc7f5_1.pkl"
 
 f = open(test, 'rb')
 V = pickle.load(f)
