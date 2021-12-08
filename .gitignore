@@ -11,3 +11,6 @@ feature
 features
 
 audio/features
+
+LRW1000_Public
+audio/*_data
