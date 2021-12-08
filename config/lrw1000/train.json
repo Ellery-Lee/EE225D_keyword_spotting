@@ -31,11 +31,9 @@
         "args": {
             "dataset_name": "lrw_1000",
             "split": "",
-            "cmu_dict_path": "data/20/vocab/LRWDict.txt",
-            "vis_feat_dir": ["feature/visual"], 
-            "aud_feat_dir": ["feature/audio"],
-            "data_struct_path_v": "data/20/lrw_1000/DsplitsLRW1000_visual.json", 
-            "data_struct_path_a": "data/20/lrw_1000/DsplitsLRW1000_audio.json", 
+            "cmu_dict_path": "data/20/vocab/LRW1000Dict.txt",
+            "vis_feat_dir": ["feature/audio"], 
+            "data_struct_path": "data/20/lrw_1000/DsplitsLRW1000_audio.json", 
             "num_phoneme_thr": 0,
             "field_vocab_paths": {
                 "graphemes": "data/20/vocab/graphemes.json",

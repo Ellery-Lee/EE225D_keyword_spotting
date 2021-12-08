@@ -445,7 +445,8 @@ class Encoder(BaseModule):
             mask = mask.unsqueeze(2).expand(
                 e_seq.size(0), e_seq.size(1), e_seq.size(2))
             e_seq = e_seq.mul(mask)
-        output, (hidden_state, cell_state) = self.lstm(e_seq)
+        # print(e_seq)
+        output, (hidden_state, cell_state) = self.lstm(e_seq)           # e_seq print
         hidden_state = torch.mean(output, 1)
         hidden_state = self.linear(hidden_state)
         cell_state = torch.mean(cell_state, 0)

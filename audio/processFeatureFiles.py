@@ -1,8 +1,8 @@
 import pickle
 import os
 
-def processFeatureFiles(category = "tst"):
-    filename = "../config/lrw1000/audio/" + category + "_1000_20.txt"
+def processFeatureFiles(category = "tst_1000"):
+    filename = "../config/lrw1000/audio/" + category + "_20.txt"
     with open(filename) as info:
         lines = info.readlines()
     

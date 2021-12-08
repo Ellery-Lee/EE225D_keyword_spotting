@@ -2,7 +2,7 @@ import pickle
 import os
 
 def processFeatureFiles(category = "tst_1000"):
-    filename = "../config/lrw1000/visual/" + category + "_20.txt"
+    filename = "../config/lrw1000/visual/" + category + ".txt"
     with open(filename) as info:
         lines = info.readlines()
     
@@ -23,6 +23,7 @@ def processFeatureFiles(category = "tst_1000"):
         try:
             data = pickle.load(f)
             nfeat += 1
+            print(nfeat)
             # if in trn.txt
             filename = data[0] # filename
             if filename in fnToWord.keys():

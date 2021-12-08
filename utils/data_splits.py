@@ -42,16 +42,16 @@ def get_LRW_split(args, split, CMUwords):
 def get_LRW_splits():
   parser = argparse.ArgumentParser(description='Script for creating main splits of LRW.')
   parser.add_argument('--CMUdict_path', default='../data/20/vocab/LRW1000words.txt')
-  parser.add_argument('--LRW_path', default='../feature/visual/') 
-  parser.add_argument('--LRW_words_path', default='../data/20/vocab/LRW1000words.txt'))
+  parser.add_argument('--LRW_path', default='../feature/audio') 
+  parser.add_argument('--LRW_words_path', default='../data/20/vocab/LRW1000words.txt')
   args = parser.parse_args()
   CMUwords = get_CMU_words(args.CMUdict_path)    
-  S = ['trn_1000', 'val_1000', 'tst_1000']
+  S = ['trn', 'val', 'tst']
   Dsplits = {}
   for i,s in enumerate(S):
     Dsplits[s] = get_LRW_split(args, s, CMUwords)
     
-  with open("../data/20/lrw_1000/DsplitsLRW1000.json", "w") as fp:
+  with open("../data/20/lrw_1000/DsplitsLRW1000_audio.json", "w") as fp:
     json.dump(Dsplits, fp)
 
 if __name__=='__main__':

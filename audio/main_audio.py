@@ -10,6 +10,7 @@ import time
 from model import *
 from torch.cuda.amp import autocast
 from audio_model import AudioModel
+from transformers import Wav2Vec2ForSequenceClassification, Wav2Vec2FeatureExtractor
 
 torch.backends.cudnn.benchmark = True
 
@@ -46,7 +47,10 @@ def feature_extractor(split):
         loader = dataset2dataloader(
             dataset, args.batch_size, args.num_workers, shuffle=False)
         
-        print('start testing')
+        model = Wav2Vec2ForSequenceClassification.from_pretrained("facebook/wav2vec2-base-960h")
+        feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained("facebook/wav2vec2-base-960h") # superb/wav2vec2-base-superb-ks
+        
+        print('model prepared, start testing')
         total = 0
 
         ## open file
@@ -69,9 +73,9 @@ def feature_extractor(split):
 
             with autocast():
                 if(args.border):
-                    audioFeature = audio_model(audio_npy, sr_npy, border_npy)
+                    audioFeature = audio_model(audio_npy, sr_npy, feature_extractor, border_npy)
                 else:
-                    audioFeature = audio_model(audio_npy, sr_npy)
+                    audioFeature = audio_model(audio_npy, sr_npy, feature_extractor)
                 # for-loop store (filename: feature) 
                 for i in range(len(filenames)):
                     filename = filenames[i]
@@ -91,4 +95,4 @@ def feature_extractor(split):
 
 
 if(__name__ == '__main__'):
-    feature_extractor('tst_1000_20')
+    feature_extractor('trn_1000_20')
