@@ -2,7 +2,7 @@ import pickle
 import os
 
 def processFeatureFiles(category = "tst_1000"):
-    filename = "../../LRW1000_Public/info/" + category + ".txt"
+    filename = "../config/lrw1000/visual/" + category + "_20.txt"
     with open(filename) as info:
         lines = info.readlines()
     

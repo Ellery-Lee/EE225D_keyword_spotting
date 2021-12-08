@@ -1,8 +1,8 @@
 import pickle
 import os
 
-def processFeatureFiles(category = "trn"):
-    filename = "../config/lrw1000/audio/" + category + "_1000.txt"
+def processFeatureFiles(category = "tst"):
+    filename = "../config/lrw1000/audio/" + category + "_1000_20.txt"
     with open(filename) as info:
         lines = info.readlines()
     
@@ -14,7 +14,7 @@ def processFeatureFiles(category = "trn"):
         if key not in fnToWord.keys():
             fnToWord[key] = value
 
-    f = open('features/trn_feature.pkl', 'rb')
+    f = open('features/tst_feature.pkl', 'rb')
     # format: ('filename', tensor feature matrix)
     print("begin creating files-------")
 

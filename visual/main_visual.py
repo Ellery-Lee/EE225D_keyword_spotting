@@ -136,6 +136,6 @@ def feature_extractor(split):
 
 
 if(__name__ == '__main__'):
-    acc, msg= feature_extractor('test')
+    acc, msg= feature_extractor('tst')
     print(f'acc={acc}')
     exit()

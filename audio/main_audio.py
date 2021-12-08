@@ -91,4 +91,4 @@ def feature_extractor(split):
 
 
 if(__name__ == '__main__'):
-    feature_extractor('tst_1000')
+    feature_extractor('tst_1000_20')

@@ -110,20 +110,27 @@ def merge_train_pretrain(Dstruct):
  
 class DatasetV(BaseDataset):
  
-    def __init__(self, num_words, num_phoneme_thr, cmu_dict_path, Vpath, 
-        splitname, data_struct_path, p_field_vocab_path, g_field_vocab_path,merge):
+    def __init__(self, num_words, num_phoneme_thr, cmu_dict_path, Vpath, Apath,
+        splitname, data_struct_path_v, data_struct_path_a, p_field_vocab_path, g_field_vocab_path,merge):
 
-        self.data_struct_path = data_struct_path
-        with open(data_struct_path, 'r') as f:
-          Dstruct = json.load(f)
-        if "trn_1000" in Dstruct.keys(): 
-          self.Ntrain = len(Dstruct["trn_1000"]) 
+        self.data_struct_path_v = data_struct_path_v
+        self.data_struct_path_a = data_struct_path_a
+
+        with open(data_struct_path_v, 'r') as f:
+          Dstructv = json.load(f)
+        with open(data_struct_path_a, 'r') as f:
+          Dstructa = json.load(f)
+        if "trn_1000" in Dstructv.keys(): 
+          self.Ntrain = len(Dstructv["trn_1000"]) 
         if merge == True:         
-          Dstruct = merge_train_pretrain(Dstruct) 
-        self.Dstruct = Dstruct[splitname]
+          Dstructv = merge_train_pretrain(Dstructv) 
+
+        self.Dstructv = Dstructv[splitname]
+        self.Dstructa = Dstructa[splitname]
         self.splitname = splitname
-        self.Vpath = Vpath  
-        self.wstruct = get_splits_datasetv(cmu_dict_path,data_struct_path, splitname) #need to change
+        self.Vpath = Vpath 
+        self.Apath = Apath 
+        self.wstruct = get_splits_datasetv(cmu_dict_path,data_struct_path_v, splitname) # data_struct_path_v doesn't change anything
         self.num_phoneme_thr = num_phoneme_thr
         self.num_words = num_words
         super().__init__(self.num_words, self.wstruct, self.num_phoneme_thr)
@@ -143,23 +150,27 @@ class DatasetV(BaseDataset):
         Didx = 0
         if self.splitname == 'trn_1000' and index>=self.Ntrain: # Ntrain = 33728 number of training features
           Didx = 1  
-        if Didx < len(self.Vpath) and index < len(self.Dstruct):
-          fpath = os.path.join(self.Vpath[Didx],self.Dstruct[index]['fn']+'.pkl')
+        if Didx < len(self.Vpath) and index < len(self.Dstructv):
+          vfpath = os.path.join(self.Vpath[Didx],self.Dstructv[index]['fn']+'.pkl')
+          afpath = os.path.join(self.Apath[Didx],self.Dstructa[index]['fn']+'.pkl')
         else:
           return self.__getitem__(index+1)
 
         if not os.path.isfile(fpath):
           return self.__getitem__(index+1)
         # read from pkl file
-        f = open(fpath, 'rb')
-        V = pickle.load(f)
+        fv = open(vfpath, 'rb')
+        V = pickle.load(fv)
+
+        fa = open(afpath, 'rb')
+        A = pickle.load(fa)
 
         # V = np.load(fpath)
         # V = torch.from_numpy(V).float()
 
         if V.size()[0]>500:
           return self.__getitem__(index+1)
-        widx = self.Dstruct[index]['widx']
+        widx = self.Dstructv[index]['widx']
         # if 'start_word' in self.Dstruct[index].keys():
         #   start_times = self.Dstruct[index]['start_word'] 
         #   end_times = self.Dstruct[index]['end_word']
@@ -171,7 +182,7 @@ class DatasetV(BaseDataset):
         #     return V, widx, self.Dstruct[index]['fn'], self.Dstruct[index]['view'], start_times, end_times
         # else:
         #     return V, widx, self.Dstruct[index]['fn']
-        return V, widx, self.Dstruct[index]['fn']
+        return V, A, widx, self.Dstruct[index]['fn']
         
     def grapheme2tensor(self, grapheme):
         mlen = 0

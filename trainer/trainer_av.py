@@ -8,7 +8,7 @@ import model.loss as module_loss
 import model.metric as module_met
 from tqdm import tqdm
 from model.metric import AverageMeter
-from data_loader.datasets import DatasetV
+from data_loader.dataset_audio_visual import DatasetV
 from parse_config import ConfigParser
 from torch.utils.data import DataLoader
 import time
@@ -28,42 +28,36 @@ def transform_batch(lstV_widx_sent, word_mask, Nw, config, sample_new_neg=0.0):
     end_times = []
     lstV_widx_sent_real = []
     for k in range(0,batch_size):
-        if lstV_widx_sent[k][0].size(0)>1:
+        if lstV_widx_sent[k][0].size(0)>1 and lstV_widx_sent[k][1].size(0)>1:
             lstV_widx_sent_real.append(lstV_widx_sent[k])
     batch_size = len(lstV_widx_sent_real)
     for k in range(0,batch_size):
-        for i, l in enumerate(lstV_widx_sent_real[k][1]):
+        for i, l in enumerate(lstV_widx_sent_real[k][2]):
             if l != -1:
                 vidx.append(k)
                 widx.append(l)
-                lens.append(lstV_widx_sent_real[k][0].size(0))
+                lens.append(lstV_widx_sent_real[k][0].size(0))                      ##??
                 target.append(1)                
                 poswidx.append(l)
-                if len(lstV_widx_sent_real[k])>3:
-                  start_times.append(lstV_widx_sent_real[k][4][i])
-                  end_times.append(lstV_widx_sent_real[k][5][i])
 
     for k in range(0,batch_size):
-        for i, l in enumerate(lstV_widx_sent_real[k][1]):
+        for i, l in enumerate(lstV_widx_sent_real[k][2]):
             if l != -1:
                 sample_new_word = np.random.binomial(size=1,n=1,p=sample_new_neg)
                 if sample_new_word==0:
                     tries = 0
                     nidx = poswidx[np.random.randint(len(poswidx))]
-                    while any(x == nidx for x in lstV_widx_sent_real[k][1]):
+                    while any(x == nidx for x in lstV_widx_sent_real[k][2]):
                         nidx = poswidx[np.random.randint(len(poswidx))]
                         tries +=1
                         if tries >10:
                           nidx = np.random.randint(Nw,dtype='int64')
-                          while word_mask[nidx]==False or any(x == nidx for x in lstV_widx_sent_real[k][1]):
+                          while word_mask[nidx]==False or any(x == nidx for x in lstV_widx_sent_real[k][2]):
                               nidx = np.random.randint(Nw,dtype='int64')
                 vidx.append(k)
                 widx.append(nidx)
                 lens.append(lstV_widx_sent_real[k][0].size(0))
                 target.append(0)
-                if len(lstV_widx_sent_real[k])>3:
-                  start_times.append(lstV_widx_sent_real[k][4][i])
-                  end_times.append(lstV_widx_sent_real[k][5][i])
 
     batch_size = len(vidx)
     vidx = np.asarray(vidx)
@@ -77,53 +71,33 @@ def transform_batch(lstV_widx_sent, word_mask, Nw, config, sample_new_neg=0.0):
     widx = widx[Ilens]
     target = target[Ilens]
     vidx = vidx[Ilens]
-    if len(lstV_widx_sent_real[k])>3: 
-      start_times = start_times[Ilens]
-      end_times = end_times[Ilens]
-    
+ 
     if len(lens)>0:
         if config["arch"]["args"]["rnn2"]==True:
           max_len = lens[0]
           localization_mask_boundaries =np.ones((batch_size,max_len))
           localization_mask = np.zeros((batch_size,max_len))
           batchV = np.zeros((batch_size,max_len,lstV_widx_sent_real[0][0].size(1))).astype('float')
+          batchA = np.zeros((batch_size,max_len,lstV_widx_sent_real[0][1].size(1))).astype('float')
           for i in range(0, batch_size):
             batchV[i,:lens[i],:] = lstV_widx_sent_real[vidx[i]][0].clone()
+            batchA[i,:lens[i],:] = lstV_widx_sent_real[vidx[i]][1].clone()
 
         else:
           max_len = lens[0]
           batchV = np.zeros((batch_size,max_len,lstV_widx_sent_real[0][0].size(1))).astype('float')
+          batchA = np.zeros((batch_size,max_len,lstV_widx_sent_real[0][1].size(1))).astype('float')
           max_out_len, max_out_len_start_out = in2out_idx(max_len)
           out_lens = np.array([ in2out_idx(ll)[0] for ll in lens ]).astype(lens.dtype)
           localization_mask_boundaries =np.ones((batch_size,max_out_len))
           localization_mask = np.ones((batch_size,max_out_len))
   
           for i in range(0, batch_size):
-            if config["localisation"]["loc_loss"]:
-              if target[i]==1:
-                w_st_orig = w_st = math.ceil(start_times[i])
-                w_end_orig = w_end = math.floor(end_times[i])
-                w_st, w_st_start_out = in2out_idx(w_st)
-                w_end, w_end_start_out = in2out_idx(w_end)
-                assert w_end >= w_st
-                w_st = max(0, w_st)
-                w_end = max(w_end, w_st+1)
-                if w_end > max_out_len:
-                  w_end = max_out_len
-                  if w_st == max_out_len and w_end == max_out_len:
-                    w_st = w_st-1
-              if target[i] == 0:
-                w_st = 0
-                w_end = max_out_len
-              if len( localization_mask[i, w_st: w_end]) == w_end - w_st and w_end != w_st:
-                localization_mask[i, w_st:w_end] = np.zeros(w_end-w_st)
-              else:
-                print("mismatch localization mask shapes")
-  
             batchV[i,:lens[i],:] = lstV_widx_sent_real[vidx[i]][0].detach().cpu().numpy().copy() ## numpy object
+            batchA[i,:lens[i],:] = lstV_widx_sent_real[vidx[i]][1].detach().cpu().numpy().copy() ## numpy object
             
 
-    return batchV, lens, widx, target, localization_mask, localization_mask_boundaries
+    return batchV, batchA, lens, widx, target, localization_mask, localization_mask_boundaries
 
 
 def in2out_idx(idx_in):
@@ -221,37 +195,33 @@ class Trainer(BaseTrainer):
                 if l not in count:
                   count.append(l)
           if len(count)>1:   
-            input, lens, widx, target, localization_mask,localization_mask_boundaries= transform_batch(lstVwidx, self.train_dataset.get_word_mask(),
+            inputV, inputA, lens, widx, target, localization_mask,localization_mask_boundaries= transform_batch(lstVwidx, self.train_dataset.get_word_mask(),
                 self.num_words, self.config)
 
             target = torch.from_numpy(target).cuda(non_blocking=True)
-            input = torch.from_numpy(input).float().cuda(non_blocking=True)
+            inputV = torch.from_numpy(inputV).float().cuda(non_blocking=True)
+            inputA = torch.from_numpy(inputA).float().cuda(non_blocking=True)
             localization_mask = torch.from_numpy(localization_mask).float().cuda(non_blocking=True)
             widx = torch.from_numpy(widx).cuda(non_blocking=True)
             grapheme = []
             phoneme = []
             p_lens = []
             for w in widx:
-              p_lens.append(len(self.train_dataset.get_GP(w)[0]))
+              p_lens.append(len(self.train_dataset.get_GP(w)[0]))                   #???/   
               grapheme.append(self.train_dataset.get_GP(w)[0])
               phoneme.append(self.train_dataset.get_GP(w)[1])
-            input_var = Variable(input)
+            inputV_var = Variable(inputV)
+            inputA_var = Variable(inputA)
             p_lens = np.asarray(p_lens)
             target_var = Variable(target.view(-1,1)).float()
-            if self.g2p:
-              graphemeTensor = Variable(self.train_dataset.grapheme2tensor_g2p(grapheme)).cuda()
-              phonemeTensor = Variable(self.train_dataset.phoneme2tensor_g2p(phoneme)).cuda()
-              preds = self.model(vis_feat_lens=lens, p_lengths=p_lens, phonemes=phonemeTensor[:-1].detach(),
-                graphemes=graphemeTensor.detach(), vis_feats=input_var, use_BE_localiser
-                =self.use_BE_localiser, epoch=epoch, config=self.config)
-              tdec = phonemeTensor[1:]
-            else:
-              graphemeTensor = Variable(self.train_dataset.grapheme2tensor(grapheme)).cuda()
-              phonemeTensor = Variable(self.train_dataset.phoneme2tensor(phoneme)).cuda()
-              preds = self.model(vis_feat_lens=lens, p_lengths=p_lens, phonemes=phonemeTensor.detach(),
-                graphemes=graphemeTensor[:-1].detach(), vis_feats=input_var, use_BE_localiser
-                =self.use_BE_localiser, epoch=epoch, config=self.config) #changed vis_feat_lens from lens to p_lens
-              tdec = graphemeTensor[1:]
+            
+            graphemeTensor = Variable(self.train_dataset.grapheme2tensor(grapheme)).cuda()
+            phonemeTensor = Variable(self.train_dataset.phoneme2tensor(phoneme)).cuda()
+            preds = self.model(vis_feat_lens=lens, p_lengths=p_lens, phonemes=phonemeTensor.detach(),
+            graphemes=graphemeTensor[:-1].detach(), vis_feats=inputV_var, aud_feats=inputA_var, use_BE_localiser
+            =self.use_BE_localiser, epoch=epoch, config=self.config) #changed vis_feat_lens from lens to p_lens
+            tdec = graphemeTensor[1:]
+
             loss_dec = module_loss.nll_loss(preds["odec"].view(preds["odec"].size(0)*preds["odec"].size(1),-1),
               tdec.view(tdec.size(0)*tdec.size(1)))
             loss_kws = self.BCE_loss(preds["max_logit"], target_var)
@@ -267,10 +237,10 @@ class Trainer(BaseTrainer):
             PTrue = preds["keyword_prob"]
             PFalseTrue = torch.cat((PTrue.add(-1).mul(-1),PTrue),1)
             prec1 = module_met.accuracy(PFalseTrue.data, target, topk=(1,))[0]
-            losses_kws.update(loss_kws.item(), input.size(0))
-            losses_dec.update(loss_dec.item(), input.size(0))
-            losses_loc.update(loss_loc.item(), input.size(0))
-            top1.update(prec1[0], input.size(0))
+            losses_kws.update(loss_kws.item(), inputV.size(0))
+            losses_dec.update(loss_dec.item(), inputV.size(0))
+            losses_loc.update(loss_loc.item(), inputV.size(0))
+            top1.update(prec1[0], inputV.size(0))
             self.optimizer.zero_grad()
             loss_total.backward()
             clip_grad_norm(self.model.parameters(), self.clip, 'inf') #this might not work
@@ -352,15 +322,17 @@ class Trainer(BaseTrainer):
                 if l not in count:
                   count.append(l)
           if len(count)>1:   
-            input, lens, widx, target, localization_mask,localization_mask_boundaries= transform_batch(lstVwidx, self.val_dataset.get_word_mask(),
+            inputV, inputA, lens, widx, target, localization_mask,localization_mask_boundaries= transform_batch(lstVwidx, self.val_dataset.get_word_mask(),
                 self.num_words, self.config)
             labels = np.concatenate((labels,target), axis=0)
             targetInt = target.astype('int32')
             target = torch.from_numpy(target).cuda(non_blocking=True)
-            input = torch.from_numpy(input).float().cuda(non_blocking=True)
+            inputV = torch.from_numpy(inputV).float().cuda(non_blocking=True)
+            inputA = torch.from_numpy(inputA).float().cuda(non_blocking=True)
             localization_mask = torch.from_numpy(localization_mask).float().cuda(non_blocking=True)
             widx = torch.from_numpy(widx).cuda(non_blocking=True)
-            input_var = Variable(input)
+            inputV_var = Variable(inputV)
+            inputA_var = Variable(inputA)
             target_var = Variable(target.view(-1,1)).float()
             grapheme = []
             phoneme = []
@@ -370,20 +342,14 @@ class Trainer(BaseTrainer):
                 grapheme.append(self.val_dataset.get_GP(w)[0])
                 phoneme.append(self.val_dataset.get_GP(w)[1])
             p_lens = np.asarray(p_lens) 
-            if self.g2p:
-              graphemeTensor = Variable(self.val_dataset.grapheme2tensor_g2p(grapheme)).cuda()
-              phonemeTensor = Variable(self.val_dataset.phoneme2tensor_g2p(phoneme)).cuda()
-              preds = self.model(vis_feat_lens=lens, p_lengths=p_lens, phonemes=phonemeTensor[:-1].detach(),
-                graphemes=graphemeTensor.detach(), vis_feats=input_var, use_BE_localiser
-                =self.use_BE_localiser, epoch=epoch, config=self.config)
-              tdec = phonemeTensor[1:]
-            else:
-              graphemeTensor = Variable(self.val_dataset.grapheme2tensor(grapheme)).cuda()
-              phonemeTensor = Variable(self.val_dataset.phoneme2tensor(phoneme)).cuda()
-              preds = self.model(vis_feat_lens=lens, p_lengths=p_lens, phonemes=phonemeTensor.detach(),
-                graphemes=graphemeTensor[:-1].detach(), vis_feats=input_var, use_BE_localiser
-                =self.use_BE_localiser, epoch=epoch, config=self.config) #changed vis_feat_lens from lens to p_lens
-              tdec = graphemeTensor[1:]
+            
+            graphemeTensor = Variable(self.val_dataset.grapheme2tensor(grapheme)).cuda()
+            phonemeTensor = Variable(self.val_dataset.phoneme2tensor(phoneme)).cuda()
+            preds = self.model(vis_feat_lens=lens, p_lengths=p_lens, phonemes=phonemeTensor.detach(),
+            graphemes=graphemeTensor[:-1].detach(), vis_feats=inputV_var, aud_feats=inputA_var, use_BE_localiser
+            =self.use_BE_localiser, epoch=epoch, config=self.config) #changed vis_feat_lens from lens to p_lens
+            tdec = graphemeTensor[1:]
+
             scores = np.concatenate((scores, preds['keyword_prob'].view(1, len(target)).detach().cpu().numpy()[0]), axis=0) 
             loss_dec = module_loss.nll_loss(preds["odec"].view(preds["odec"].size(0)*preds["odec"].size(1),-1), tdec.view(tdec.size(0)*tdec.size(1)))
             loss_kws = self.BCE_loss(preds["max_logit"], target_var )
@@ -400,11 +366,11 @@ class Trainer(BaseTrainer):
             PFalseTrue = torch.cat((PTrue.add(-1).mul(-1),PTrue),1)
             prec1 = module_met.accuracy(PFalseTrue.data, target, topk=(1,))[0]
             PR = module_met.PrecRec(PFalseTrue.data, target, topk=(1,))
-            losses.update(loss_total.item(), input.size(0))
-            losses_kws.update(loss_kws.item(), input.size(0))
-            losses_dec.update(loss_dec.item(), input.size(0))
-            losses_loc.update(loss_loc.item(), input.size(0))
-            top1.update(prec1[0], input.size(0))
+            losses.update(loss_total.item(), inputV.size(0))
+            losses_kws.update(loss_kws.item(), inputV.size(0))
+            losses_dec.update(loss_dec.item(), inputV.size(0))
+            losses_loc.update(loss_loc.item(), inputV.size(0))
+            top1.update(prec1[0], inputV.size(0))
             myprec.update(PR[0], (PFalseTrue.data[:,1]>0.5).sum())
             myrec.update(PR[1], target.sum())
           pbar.update(1)

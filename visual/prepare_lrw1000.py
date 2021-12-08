@@ -54,7 +54,7 @@ class LRW1000_Dataset(Dataset):
 
     def get_video_audio_map(self):
 
-        self.anno = '../../LRW1000_Public/info/all_audio_video.txt'
+        self.anno = '../config/lrw1000/all_audio_video_20.txt'
         with open(self.anno, 'r') as f:
             lines = [line.strip() for line in f.readlines()]
             lines = [line.split(',') for line in lines]
@@ -125,7 +125,7 @@ class LRW1000_Dataset(Dataset):
 if(__name__ == '__main__'):
     for subset in ['trn', 'val', 'tst']:
         target_dir = f'LRW1000_Public_pkl_jpeg/{subset}'
-        index_file = f'../../LRW1000_Public/info/{subset}_1000.txt'
+        index_file = f'../config/lrw1000/visual/{subset}_1000_20.txt'
 
         if(not os.path.exists(target_dir)):
             os.makedirs(target_dir)

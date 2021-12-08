@@ -38,14 +38,14 @@ class KWSModel(BaseModel):
         self.classifier_BE = Classifier_BE(
             hiddenDNNV=hiddenDNNV, dimRnn3=dimRnn3)
 
-    def forward(self, epoch, vis_feats, vis_feat_lens, p_lengths, graphemes, phonemes, use_BE_localiser, config):  # audio, visual
+    def forward(self, epoch, vis_feats, aud_feats, vis_feat_lens, p_lengths, graphemes, phonemes, use_BE_localiser, config):  # audio, visual
         if epoch == config["data_loader"]["args"]["start_BEloc_epoch"]:
             for param in self.classifier_init.parameters():
                 param.requires_grad = False
         else:
             for param in self.classifier_init.parameters():
                 param.requires_grad = True
-        odec, vis_feat_lens, o_init, o_rnn, plotted_mask, o_logits, indices = self.classifier_init(
+        vodec, vis_feat_lens, vo_init, vo_rnn, vplotted_mask, vo_logits, vindices = self.classifier_init(
             x=vis_feats,
             x_lengths=vis_feat_lens,
             phoneme=phonemes,
@@ -53,13 +53,29 @@ class KWSModel(BaseModel):
             p_lengths=p_lengths
         )
         if epoch >= config["data_loader"]["args"]["start_BEloc_epoch"]:
-            o, odec, idx_max, o_logits = self.classifier_BE(
-                o_rnn, odec, vis_feat_lens)
+            vo, vodec, vidx_max, vo_logits = self.classifier_BE(
+                vo_rnn, vodec, vis_feat_lens)
         else:
             idx_max = Variable(torch.LongTensor(
                 vis_feats.size(0)).fill_(0).cuda())
-            o = o_init
+            vo = vo_init
         
+        aodec, vis_feat_lens, ao_init, ao_rnn, aplotted_mask, ao_logits, aindices = self.classifier_init(
+            x=aud_feats,
+            x_lengths=vis_feat_lens,
+            phoneme=phonemes,
+            grapheme=graphemes,
+            p_lengths=p_lengths
+        )
+        if epoch >= config["data_loader"]["args"]["start_BEloc_epoch"]:
+            ao, aodec, aidx_max, ao_logits = self.classifier_BE(
+                ao_rnn, aodec, vis_feat_lens)
+        else:
+            idx_max = Variable(torch.LongTensor(
+                vis_feats.size(0)).fill_(0).cuda())
+            ao = ao_init
+
+        o = (ao + vo) / 2  ## ??? what is the output, integer or array?
         keyword_prob = torch.sigmoid(o)
         return {"max_logit": o, "odec": odec, "idx_max": indices,
                 "keyword_prob": keyword_prob, "plot": plotted_mask, "o_logits": o_logits}
