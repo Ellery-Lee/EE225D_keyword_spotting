@@ -135,7 +135,7 @@ class DatasetV(BaseDataset):
         self.num_words = num_words
         super().__init__(self.num_words, self.wstruct, self.num_phoneme_thr)
         self.word_mask, self.word_indices = self.set_word_mask()
-        self.length = len(self.Dstruct)
+        self.length = len(self.Dstructv)
 
         with open(g_field_vocab_path, 'r') as f:
             self.g_field_vocab = json.load(f)
@@ -156,7 +156,7 @@ class DatasetV(BaseDataset):
         else:
           return self.__getitem__(index+1)
 
-        if not os.path.isfile(fpath):
+        if not os.path.isfile(vfpath) or not os.path.isfile(afpath):
           return self.__getitem__(index+1)
         # read from pkl file
         fv = open(vfpath, 'rb')
@@ -182,7 +182,7 @@ class DatasetV(BaseDataset):
         #     return V, widx, self.Dstruct[index]['fn'], self.Dstruct[index]['view'], start_times, end_times
         # else:
         #     return V, widx, self.Dstruct[index]['fn']
-        return V, A, widx, self.Dstruct[index]['fn']
+        return V, A, widx, self.Dstructv[index]['fn']
         
     def grapheme2tensor(self, grapheme):
         mlen = 0

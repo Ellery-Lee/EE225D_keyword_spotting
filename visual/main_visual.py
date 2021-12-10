@@ -100,6 +100,8 @@ def feature_extractor(split):
             tic = time.time()
             video = input.get('video').cuda(non_blocking=True)
             label = input.get('label').cuda(non_blocking=True)
+            op = input.get('op').cuda(non_blocking=True)
+            ed = input.get('ed').cuda(non_blocking=True)
             
             total = total + video.size(0)
             border = input.get('duration').cuda(non_blocking=True).float()
@@ -111,7 +113,7 @@ def feature_extractor(split):
                     f_v, y_v = video_model(video)
                 # for-loop store (filename: feature) 
                 for i in range(len(filenames)):
-                    filename = filenames[i]
+                    filename = filenames[i] + "_" + str(op[i]) + "_" + str(ed[i])
                     if filename not in file_appeared:
                         feat = f_v[i]
                         pickle.dump((filename, feat), f)
@@ -136,6 +138,6 @@ def feature_extractor(split):
 
 
 if(__name__ == '__main__'):
-    acc, msg= feature_extractor('tst')
+    acc, msg= feature_extractor('tst_1000_20')
     print(f'acc={acc}')
     exit()

@@ -75,7 +75,22 @@ class KWSModel(BaseModel):
                 vis_feats.size(0)).fill_(0).cuda())
             ao = ao_init
 
-        o = (ao + vo) / 2  ## ??? what is the output, integer or array?
+        ### simple average the logits (should find the best weighted average or use some other ways to merge the results)
+        addition_result = ao.add(vo)
+        o = torch.div(addition_result, 2)
+
+        addition_result_logits = ao_logits.add(vo_logits)
+        o_logits = torch.div(addition_result_logits, 2)
+
+        addition_result_odec = aodec.add(vodec)
+        odec = torch.div(addition_result_odec, 2)
+
+        addition_result_idx = aindices.add(vindices)
+        indices = torch.div(addition_result_idx, 2)
+
+        addition_result_mask = aplotted_mask.add(vplotted_mask)
+        plotted_mask = torch.div(addition_result_mask, 2)
+
         keyword_prob = torch.sigmoid(o)
         return {"max_logit": o, "odec": odec, "idx_max": indices,
                 "keyword_prob": keyword_prob, "plot": plotted_mask, "o_logits": o_logits}

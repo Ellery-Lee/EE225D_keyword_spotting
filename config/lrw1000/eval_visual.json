@@ -12,8 +12,8 @@
             "birnnV": true,
             "d_word_emb": 128,
             "outdpV": 0.2,
-            "p_size": 510,
-            "g_size": 800,
+            "p_size": 87,
+            "g_size": 90,
             "d_embed": 64,
             "d_hidden": 500,
             "embDO": 0,
@@ -31,15 +31,15 @@
         "args": {
             "dataset_name": "lrw_1000",
             "split": "tst_1000",
-            "cmu_dict_path": "data/100/vocab/LRWDict.txt",
-            "vis_feat_dir":["features/visual"], 
-            "data_struct_path": "data/100/lrw_1000/DsplitsLRW1000.json", 
+            "cmu_dict_path": "data/20/vocab/LRW1000Dict.txt",
+            "vis_feat_dir":["feature/visual"], 
+            "data_struct_path": "data/20/lrw_1000/DsplitsLRW1000_visual.json", 
             "num_phoneme_thr": 0,
             "field_vocab_paths": {
-                "graphemes": "data/100/vocab/graphemes.json",
-                "phonemes": "data/100/vocab/phonemes.json"
+                "graphemes": "data/20/vocab/graphemes.json",
+                "phonemes": "data/20/vocab/phonemes.json"
             },
-            "num_words": 1184
+            "num_words": 50
         }
     },
     "data_loader": {
@@ -53,7 +53,7 @@
         }
     },
     "tester": {
-        "save_dir": "data/saved/",
+        "save_dir": "data/v_saved/",
         "verbosity": 2
     },
     "localisation": {

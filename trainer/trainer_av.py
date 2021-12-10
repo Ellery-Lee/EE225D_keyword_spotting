@@ -189,7 +189,7 @@ class Trainer(BaseTrainer):
           count = []
           positives = 0
           for k in range(0,len(lstVwidx)):
-            for l in lstVwidx[k][1]:
+            for l in lstVwidx[k][2]:
               if l != -1:
                 positives +=1
                 if l not in count:

@@ -17,9 +17,9 @@ class LRW1000_Dataset(Dataset):
         self.args = args
         self.data = []
         self.phase = phase
-        if(self.phase == 'trn'):
+        if(self.phase == 'trn_1000_20'):
             self.index_root = 'LRW1000_Public_pkl_jpeg/trn'
-        elif self.phase == 'val':
+        elif self.phase == 'val_1000_20':
             self.index_root = 'LRW1000_Public_pkl_jpeg/val'
         else:
             self.index_root = 'LRW1000_Public_pkl_jpeg/tst'

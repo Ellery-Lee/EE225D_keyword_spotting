@@ -12,8 +12,8 @@
             "birnnV": true,
             "d_word_emb": 128,
             "outdpV": 0.2,
-            "p_size": 83,
-            "g_size": 86,
+            "p_size": 87,   
+            "g_size": 90,
             "d_embed": 64,
             "d_hidden": 500,
             "embDO": 0,
@@ -59,7 +59,7 @@
         "kws_weight_loss": 1
     },
     "tester": {
-        "save_dir": "data/saved/",
+        "save_dir": "data/a_saved/",
         "verbosity": 2
     },
     "optimizer": {
@@ -79,7 +79,7 @@
     },
     "trainer": {      
             "epochs": 50, 
-            "save_dir": "data/saved/",  
+            "save_dir": "data/a_saved/",  
             "save_period": 1, 
             "verbosity": 2,  
             "monitor": "off", 
