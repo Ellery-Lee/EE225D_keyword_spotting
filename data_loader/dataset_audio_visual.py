@@ -148,7 +148,7 @@ class DatasetV(BaseDataset):
 
     def __getitem__(self, index):
         Didx = 0
-        if self.splitname == 'trn_1000' and index>=self.Ntrain: # Ntrain = 33728 number of training features
+        if self.splitname == 'trn_1000' and index>=self.Ntrain: 
           Didx = 1  
         if Didx < len(self.Vpath) and index < len(self.Dstructv):
           vfpath = os.path.join(self.Vpath[Didx],self.Dstructv[index]['fn']+'.pkl')

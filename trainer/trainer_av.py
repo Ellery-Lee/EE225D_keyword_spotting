@@ -207,7 +207,7 @@ class Trainer(BaseTrainer):
             phoneme = []
             p_lens = []
             for w in widx:
-              p_lens.append(len(self.train_dataset.get_GP(w)[0]))                   #???/   
+              p_lens.append(len(self.train_dataset.get_GP(w)[0]))                   
               grapheme.append(self.train_dataset.get_GP(w)[0])
               phoneme.append(self.train_dataset.get_GP(w)[1])
             inputV_var = Variable(inputV)
@@ -316,7 +316,7 @@ class Trainer(BaseTrainer):
           count = []
           positives = 0
           for k in range(0,len(lstVwidx)):
-            for l in lstVwidx[k][1]:
+            for l in lstVwidx[k][2]:
               if l != -1:
                 positives +=1
                 if l not in count:

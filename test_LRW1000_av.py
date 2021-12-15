@@ -10,15 +10,15 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 import os
 import numpy as np
-import data_loader.datasets as module_data
+import data_loader.dataset_audio_visual as module_data
 import model.loss as module_loss
 import model.metric as module_met
-import model.model as module_arch
+import model.model_av as module_arch
 from torch.utils.data import DataLoader
 from utils.util import canonical_state_dict_keys
 from parse_config import ConfigParser
 from model.metric import AverageMeter
-from data_loader.datasets import DatasetV
+from data_loader.dataset_audio_visual import DatasetV
 from torch.utils.data.dataloader import default_collate
 import sys
 import json
@@ -89,39 +89,28 @@ def transform_batch_test(lstV_widx_sent, batchword, config):
     batch_size = len(lstV_widx_sent_real)
     for k in range(0, batch_size):
         lens.append(lstV_widx_sent_real[k][0].size(0))
-        TN = 1 if any(x == batchword for x in lstV_widx_sent_real[k][1]) else 0
+        TN = 1 if any(x == batchword for x in lstV_widx_sent_real[k][2]) else 0
         target.append(TN)
-        # if TN == 0:
-        #   start_times.append(0)
-        #   end_times.append(0)
-        # else:
-        #   for i, x in enumerate(lstV_widx_sent_real[k][1]):
-        #     if x ==batchword:
-        #       start_times.append(lstV_widx_sent_real[k][4][i])
-        #       end_times.append(lstV_widx_sent_real[k][5][i])
-        vnames.append(lstV_widx_sent_real[k][2])
+        vnames.append(lstV_widx_sent_real[k][3])
         # view.append(lstV_widx_sent_real[k][3])
     lens = np.asarray(lens)
     target = np.asarray(target)
-    # start_times = np.asarray(start_times)
-    # end_times=np.asarray(end_times)
     Ilens = np.argsort(-lens)
     lens = lens[Ilens]
     target = target[Ilens]
-    # start_times = start_times[Ilens]
-    # end_times = end_times[Ilens]
     vnames = [vnames[i] for i in Ilens]
     # view = [view[i] for i in Ilens]
     max_len = lens[0]
     max_out_len, rec_field, offset = in2out_idx(max_len)
     batchV = np.zeros(
         (batch_size, max_len, lstV_widx_sent_real[0][0].size(1))).astype('float')
+    batchA = np.zeros((batch_size,max_len,lstV_widx_sent_real[0][1].size(1))).astype('float')
     for i in range(0, batch_size):
-        batchV[i, :lens[i], :] = lstV_widx_sent_real[Ilens[i]
-                                                     ][0].detach().cpu().numpy().copy()
+        batchV[i, :lens[i], :] = lstV_widx_sent_real[Ilens[i]][0].detach().cpu().numpy().copy()
+        batchA[i, :lens[i], :] = lstV_widx_sent_real[Ilens[i]][1].detach().cpu().numpy().copy()
     # return batchV, lens, target, vnames, start_times, end_times, rec_field, Ilens
     # batchV.shape (40, 40, 512)
-    return batchV, lens, target, vnames, rec_field, Ilens
+    return batchV, batchA, lens, target, vnames, rec_field, Ilens
 
 
 def in2out_idx(idx_in):
@@ -165,10 +154,12 @@ def evaluation(config, logger=None):
     num_phoneme_thr = config["dataset"]["args"]["num_phoneme_thr"]
     split = config["dataset"]["args"]["split"]
     cmu_dict_path = config["dataset"]["args"]["cmu_dict_path"]
-    data_struct_path = config["dataset"]["args"]["data_struct_path"]
+    data_struct_path_v = config["dataset"]["args"]["data_struct_path_v"]
+    data_struct_path_a = config["dataset"]["args"]["data_struct_path_a"]
     p_field_path = config["dataset"]["args"]["field_vocab_paths"]["phonemes"]
     g_field_path = config["dataset"]["args"]["field_vocab_paths"]["graphemes"]
     vis_feat_dir = config["dataset"]["args"]["vis_feat_dir"]
+    aud_feat_dir = config["dataset"]["args"]["aud_feat_dir"]
     batch_size = config["data_loader"]["args"]["batch_size"]
     shuffle = config["data_loader"]["args"]["shuffle"]
     drop_last = config["data_loader"]["args"]["drop_last"]
@@ -178,14 +169,14 @@ def evaluation(config, logger=None):
     use_BE_localiser = config["arch"]["args"]["rnn2"]
 
     test_dataset = DatasetV(num_words, num_phoneme_thr, cmu_dict_path,
-                            vis_feat_dir, split, data_struct_path, p_field_path, g_field_path, False)
+                            vis_feat_dir, aud_feat_dir, split, data_struct_path_v, data_struct_path_a, p_field_path, g_field_path, False)
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, num_workers=num_workers,
                                               pin_memory=pin_memory, shuffle=shuffle, drop_last=drop_last, collate_fn=collate_fn)
 
     Words = []
     for i, lstVwidx in enumerate(test_loader):
         for b in range(0, len(lstVwidx)):
-            for w in lstVwidx[b][1]:
+            for w in lstVwidx[b][2]:
                 if w != -1:
                     Words.append(w)
 
@@ -198,16 +189,18 @@ def evaluation(config, logger=None):
 
     for j, batchword in enumerate(Words):
         for i, lstVwidx in enumerate(test_loader):
-            # input, lens, target, vnames, view, start_times, end_times, rec_field, Ilens = transform_batch_test(lstVwidx, batchword, config)
-            input, lens, target, vnames, rec_field, Ilens = transform_batch_test(
+            # inputV, lens, target, vnames, view, start_times, end_times, rec_field, Ilens = transform_batch_test(lstVwidx, batchword, config)
+            inputV, inputA, lens, target, vnames, rec_field, Ilens = transform_batch_test(
                 lstVwidx, batchword, config)
             names = np.concatenate((names, vnames), axis=0)
-            batch_size = input.shape[0]   # 40
+            batch_size = inputV.shape[0]   # 40
             widx = np.asarray([batchword]*batch_size).astype('int32')
             target = torch.from_numpy(target).cuda(non_blocking=True)
-            input = torch.from_numpy(input).float().cuda(non_blocking=True)
+            inputV = torch.from_numpy(inputV).float().cuda(non_blocking=True)
+            inputA = torch.from_numpy(inputA).float().cuda(non_blocking=True)
             widx = torch.from_numpy(widx).cuda(non_blocking=True)
-            input_var = Variable(input)
+            inputV_var = Variable(inputV)
+            inputA_var = Variable(inputA)
             target_var = Variable(target.view(-1, 1)).float()
             grapheme = []
             phoneme = []
@@ -217,29 +210,18 @@ def evaluation(config, logger=None):
             batchword_str = ''.join(grapheme[0])
             if i == 1:
                 logger.info("batchword: {}".format(batchword_str))
-            if g2p:
-                graphemeTensor = Variable(
-                    test_dataset.grapheme2tensor_g2p(grapheme)).cuda()
-                phonemeTensor = Variable(
-                    test_dataset.phoneme2tensor_g2p(phoneme)).cuda()
-                try:
-                    preds = model(vis_feat_lens=lens, p_lengths=None, phonemes=phonemeTensor[:-1].detach(),
-                                  graphemes=graphemeTensor.detach(), vis_feats=input_var, use_BE_localiser=use_BE_localiser, epoch=90, config=config)
-                except Exception as err:
-                    print(err)
-                    continue
-                tdec = phonemeTensor[1:]
-            else:
-                graphemeTensor = Variable(
-                    test_dataset.grapheme2tensor(grapheme)).cuda()
-                phonemeTensor = Variable(
-                    test_dataset.phoneme2tensor(phoneme)).cuda()
+            
+            graphemeTensor = Variable(
+                test_dataset.grapheme2tensor(grapheme)).cuda()
+            phonemeTensor = Variable(
+                test_dataset.phoneme2tensor(phoneme)).cuda()
 
-                preds = model(vis_feat_lens=lens, p_lengths=None, phonemes=phonemeTensor.detach(),
-                              graphemes=graphemeTensor[:-1].detach(), vis_feats=input_var, use_BE_localiser=use_BE_localiser, epoch=90, config=config)  # changed vis_feat_lens from lens to p_lens
-                print("finish first stage")
+            preds = model(vis_feat_lens=lens, p_lengths=None, phonemes=phonemeTensor.detach(),
+                            graphemes=graphemeTensor[:-1].detach(), vis_feats=inputV_var, aud_feats=inputA_var, use_BE_localiser=use_BE_localiser, epoch=90, config=config)
+            print("finish first stage")
 
-                tdec = graphemeTensor[1:]
+            tdec = graphemeTensor[1:]
+
             values = preds['max_logit'].view(
                 1, len(target)).detach().cpu().numpy()[0]
             ground_truths = target.detach().cpu().numpy()
@@ -249,21 +231,27 @@ def evaluation(config, logger=None):
                 for k in np.where(target.detach().cpu().numpy() == 1)[0]:
                     logits = []
                     padding = math.ceil((rec_field-1)/2)
-                    input_loc = input[k, :, :].unsqueeze(
+                    inputV_loc = inputV[k, :, :].unsqueeze(
                         0).cpu().detach().numpy()
-                    input_loc = np.pad(input_loc, ((
+                    inputV_loc = np.pad(inputV_loc, ((
                         0, 0), (padding, padding), (0, 0)), 'constant', constant_values=(0, 0))
+
+                    inputA_loc = inputA[k, :, :].unsqueeze(
+                        0).cpu().detach().numpy()
+                    inputA_loc = np.pad(inputA_loc, ((
+                        0, 0), (padding, padding), (0, 0)), 'constant', constant_values=(0, 0))
+
                     for m in range(0, lens[k]):
-                        input_chunck = torch.from_numpy(input_loc).float().cuda(
+                        inputV_chunck = torch.from_numpy(inputV_loc).float().cuda(
                             non_blocking=True)[:, 11-11+m:11+12+m, :]
-                        input_var_chunck = Variable(input_chunck)
+                        inputV_var_chunck = Variable(inputV_chunck)
+                        inputA_chunck = torch.from_numpy(inputA_loc).float().cuda(
+                            non_blocking=True)[:, 11-11+m:11+12+m, :]
+                        inputA_var_chunck = Variable(inputA_chunck)
                         lens_loc = np.asarray([23])
-                        if g2p:
-                            preds_loc = model(vis_feat_lens=lens_loc, p_lengths=None, phonemes=phonemeTensor[:-1][:, k].unsqueeze(1).detach(),
-                                              graphemes=graphemeTensor[:, k].unsqueeze(1).detach(), vis_feats=input_var_chunck, use_BE_localiser=use_BE_localiser, epoch=74, config=config)
-                        else:
-                            preds_loc = model(vis_feat_lens=lens_loc, p_lengths=None, phonemes=phonemeTensor[:, k].unsqueeze(1).detach(),
-                                              graphemes=graphemeTensor[:-1][:, k].unsqueeze(1).detach(), vis_feats=input_var_chunck, use_BE_localiser=use_BE_localiser, epoch=74, config=config)
+                        
+                        preds_loc = model(vis_feat_lens=lens_loc, p_lengths=None, phonemes=phonemeTensor[:, k].unsqueeze(1).detach(),
+                                            graphemes=graphemeTensor[:-1][:, k].unsqueeze(1).detach(), vis_feats=inputV_var_chunck, aud_feats=inputA_var_chunck,use_BE_localiser=use_BE_localiser, epoch=74, config=config)
 
                         logits.append(preds_loc["o_logits"][0][1][0].item())
                     logits = np.array(logits)
@@ -281,25 +269,6 @@ def evaluation(config, logger=None):
     recall_k_all_words_10 = []
     map_all_words = []
     print("label length: ", len(labels))
-    # x = 1242
-    # for i in range(0, 644):
-    #     labels_word = labels[i*x:((i*x)+x)]
-    #     scores_word = scores[i*x:((i*x)+x)]
-    #     original_labels_word = original_labels[i*x:((i*x)+x)]
-    #     map_all_words.append(mean_average_precision_score(
-    #         labels_word, scores_word, original_labels_word))
-    #     Iscores = np.argsort(-scores_word)
-    #     labels_word = labels_word[Iscores]
-    #     recall_k_all_words_1.append(recall_at_k(
-    #         labels_word, 1, original_labels_word))
-    #     recall_k_all_words_5.append(recall_at_k(
-    #         labels_word, 5, original_labels_word))
-    #     recall_k_all_words_10.append(recall_at_k(
-    #         labels_word, 10, original_labels_word))
-    # print("R@1 {}".format(np.mean(np.asarray(recall_k_all_words_1))))
-    # print("R@5 {}".format(np.mean(np.asarray(recall_k_all_words_5))))
-    # print("R@10 {}".format(np.mean(np.asarray(recall_k_all_words_10))))
-    # print("mAP {}".format(np.mean(np.asarray(map_all_words))))
     print("EER {}".format(eer))
 
 

@@ -72,48 +72,28 @@ class KWSModel(BaseModel):
                 ao_rnn, aodec, vis_feat_lens)
         else:
             idx_max = Variable(torch.LongTensor(
-                aud_feats.size(0)).fill_(0).cuda())
+                vis_feats.size(0)).fill_(0).cuda())
             ao = ao_init
 
         ### simple average the logits (should find the best weighted average or use some other ways to merge the results)
-        # addition_result = ao.add(vo)
-        # o = torch.div(addition_result, 2)
+        addition_result = ao.add(vo)
+        o = torch.div(addition_result, 2)
 
-        # addition_result_logits = ao_logits.add(vo_logits)
-        # o_logits = torch.div(addition_result_logits, 2)
+        addition_result_logits = ao_logits.add(vo_logits)
+        o_logits = torch.div(addition_result_logits, 2)
 
-        # addition_result_odec = aodec.add(vodec)
-        # odec = torch.div(addition_result_odec, 2)
+        addition_result_odec = aodec.add(vodec)
+        odec = torch.div(addition_result_odec, 2)
 
-        # addition_result_idx = aindices.add(vindices)
-        # indices = torch.div(addition_result_idx, 2)
+        addition_result_idx = aindices.add(vindices)
+        indices = torch.div(addition_result_idx, 2)
 
-        # addition_result_mask = aplotted_mask.add(vplotted_mask)
-        # plotted_mask = torch.div(addition_result_mask, 2)
+        addition_result_mask = aplotted_mask.add(vplotted_mask)
+        plotted_mask = torch.div(addition_result_mask, 2)
 
-        ao = ao * 0.7
-        vo = vo * 0.3
-        o = ao.add(vo)
-
-        ao_logits = ao_logits * 0.7
-        vo_logits = vo_logits * 0.3
-        o_logits = ao_logits.add(vo_logits)
-
-        aodec = aodec * 0.7
-        vodec = vodec * 0.3
-        odec = aodec.add(vodec)
-
-        aindices = aindices * 0.7
-        vindices = vindices * 0.3
-        indices = aindices.add(vindices)
-
-        aplotted_mask = aplotted_mask * 0.7
-        vplotted_mask = vplotted_mask * 0.3
-        plotted_mask = aplotted_mask.add(vplotted_mask)
-
-        keyword_prob = torch.sigmoid(o)
-        return {"max_logit": o, "odec": odec, "idx_max": indices,
-                "keyword_prob": keyword_prob, "plot": plotted_mask, "o_logits": o_logits}
+        keyword_prob = torch.sigmoid(vo)
+        return {"max_logit": vo, "odec": vodec, "idx_max": vindices,
+                "keyword_prob": keyword_prob, "plot": vplotted_mask, "o_logits": vo_logits}
         
 
 

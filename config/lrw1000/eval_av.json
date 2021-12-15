@@ -1,0 +1,64 @@
+{
+    "name": "kws_net_test",
+    "n_gpu": 1,
+    "seed": 0,
+    "arch": {
+        "type": "KWSModel",
+        "args": {
+            "hiddenDNNV": 128,
+            "dimRnn3": 16,
+            "inputDimV": 512,
+            "hiddenDimV": 256,
+            "birnnV": true,
+            "d_word_emb": 128,
+            "outdpV": 0.2,
+            "p_size": 87,
+            "g_size": 90,
+            "d_embed": 64,
+            "d_hidden": 500,
+            "embDO": 0,
+            "beam_size": 3,
+            "num_heads": 1,
+            "rnn2": false,
+            "fixed_length_embedding": false,
+            "shortcut": true,
+            "loc_acc": false,
+            "g2p": false
+        }
+    },
+    "dataset": {
+        "type": "DatasetV", 
+        "args": {
+            "dataset_name": "lrw_1000",
+            "split": "tst_1000",
+            "cmu_dict_path": "data/20/vocab/LRW1000Dict.txt",
+            "vis_feat_dir": ["feature/visual"],
+            "aud_feat_dir":["feature/audio"], 
+            "data_struct_path_v": "data/20/lrw_1000/DsplitsLRW1000_visual.json", 
+            "data_struct_path_a": "data/20/lrw_1000/DsplitsLRW1000_audio.json", 
+            "num_phoneme_thr": 0,
+            "field_vocab_paths": {
+                "graphemes": "data/20/vocab/graphemes.json",
+                "phonemes": "data/20/vocab/phonemes.json"
+            },
+            "num_words": 50
+        }
+    },
+    "data_loader": {
+        "args": {
+            "batch_size": 40,
+            "shuffle": false,
+            "drop_last": false,
+            "pin_memory": false,
+            "num_workers": 0,
+            "start_BEloc_epoch": 200
+        }
+    },
+    "tester": {
+        "save_dir": "data/saved/",
+        "verbosity": 2
+    },
+    "localisation": {
+        "loc_loss": true                             
+    }
+}
