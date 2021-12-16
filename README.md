@@ -1,7 +1,8 @@
 This is a repo for Chinese-keyword-spotting project.
 
 ### Dataset
-We use the CAS-VSR-W1k(originally called LRW-1000) dataset. 
+We use the CAS-VSR-W1k(originally called LRW-1000) dataset.
+https://drive.google.com/drive/u/1/folders/17TPjaHx2hOcPBGnl89s2G7DUDB6Wk67Q
 
 ### Feature extraction
 - audio
